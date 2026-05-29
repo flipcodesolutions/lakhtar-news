@@ -1,0 +1,499 @@
+# users Table Migration
+
+```php
+Schema::create('users', function (Blueprint $table) {
+    $table->id();
+    $table->string('name');
+    $table->string('mobile')->unique();
+    $table->string('email')->nullable();
+    $table->string('password')->nullable();
+    $table->enum('role', ['admin', 'editor', 'user'])->default('user');
+    $table->foreignId('language_id')->nullable()->constrained('languages');
+    $table->string('profile_image')->nullable();
+    $table->boolean('is_active')->default(1);
+    $table->timestamps();
+});
+```
+
+---
+
+# categories Table Migration
+
+```php
+Schema::create('categories', function (Blueprint $table) {
+    $table->id();
+    $table->string('name');
+    $table->string('slug')->unique();
+    $table->string('image')->nullable();
+    $table->boolean('status')->default(1);
+    $table->timestamps();
+});
+```
+
+---
+
+# languages Table Migration
+
+```php
+Schema::create('languages', function (Blueprint $table) {
+    $table->id();
+    $table->string('name');
+    $table->string('code');
+    $table->boolean('status')->default(1);
+    $table->timestamps();
+});
+```
+
+---
+
+# news Table Migration
+
+```php
+Schema::create('news', function (Blueprint $table) {
+    $table->id();
+
+    $table->foreignId('category_id')->constrained('categories');
+    $table->foreignId('user_id')->constrained('users');
+    $table->foreignId('language_id')->nullable()->constrained('languages');
+
+    $table->string('title');
+    $table->string('slug')->unique();
+
+    $table->text('short_description')->nullable();
+    $table->longText('description');
+
+    $table->string('image')->nullable();
+    $table->string('video')->nullable();
+
+    $table->enum('news_type', [
+        'normal',
+        'breaking',
+        'trending',
+        'live'
+    ])->default('normal');
+
+    $table->boolean('is_featured')->default(0);
+    $table->bigInteger('total_views')->default(0);
+
+    $table->dateTime('publish_date')->nullable();
+
+    $table->boolean('status')->default(1);
+
+    $table->timestamps();
+});
+```
+
+---
+
+# live_streams Table Migration
+
+```php
+Schema::create('live_streams', function (Blueprint $table) {
+    $table->id();
+
+    $table->string('title');
+    $table->text('stream_url');
+
+    $table->string('thumbnail')->nullable();
+
+    $table->text('description')->nullable();
+
+    $table->dateTime('start_time')->nullable();
+    $table->dateTime('end_time')->nullable();
+
+    $table->boolean('status')->default(1);
+
+    $table->timestamps();
+});
+```
+
+---
+
+# banners Table Migration
+
+```php
+Schema::create('banners', function (Blueprint $table) {
+    $table->id();
+
+    $table->string('title');
+    $table->string('image');
+
+    $table->text('link')->nullable();
+
+    $table->string('position')->nullable();
+
+    $table->boolean('status')->default(1);
+
+    $table->timestamps();
+});
+```
+
+---
+
+# user_favorite_categories Table Migration
+
+```php
+Schema::create('user_favorite_categories', function (Blueprint $table) {
+    $table->id();
+
+    $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+    $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');
+
+    $table->timestamps();
+});
+```
+
+---
+
+# news_views Table Migration
+
+```php
+Schema::create('news_views', function (Blueprint $table) {
+    $table->id();
+
+    $table->foreignId('user_id')->nullable()->constrained('users');
+    $table->foreignId('news_id')->constrained('news')->onDelete('cascade');
+
+    $table->string('ip_address')->nullable();
+
+    $table->timestamps();
+});
+```
+
+---
+
+# comments Table Migration
+
+```php
+Schema::create('comments', function (Blueprint $table) {
+    $table->id();
+
+    $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+    $table->foreignId('news_id')->constrained('news')->onDelete('cascade');
+
+    $table->text('comment');
+
+    $table->boolean('status')->default(0);
+
+    $table->timestamps();
+});
+```
+
+---
+
+# notifications Table Migration
+
+```php
+Schema::create('notifications', function (Blueprint $table) {
+    $table->id();
+
+    $table->string('title');
+    $table->text('message');
+
+    $table->foreignId('user_id')->nullable()->constrained('users');
+
+    $table->string('type')->nullable();
+
+    $table->boolean('is_read')->default(0);
+
+    $table->timestamps();
+});
+```
+
+---
+
+# app_settings Table Migration
+
+```php
+Schema::create('app_settings', function (Blueprint $table) {
+    $table->id();
+
+    $table->string('app_name')->nullable();
+    $table->string('logo')->nullable();
+
+    $table->string('contact_email')->nullable();
+    $table->string('contact_mobile')->nullable();
+
+    $table->longText('privacy_policy')->nullable();
+    $table->longText('terms_conditions')->nullable();
+    $table->longText('about_us')->nullable();
+
+    $table->timestamps();
+});
+```
+
+---
+
+# otp_verifications Table Migration
+
+```php
+Schema::create('otp_verifications', function (Blueprint $table) {
+    $table->id();
+
+    $table->string('mobile');
+    $table->string('otp');
+
+    $table->dateTime('expire_at')->nullable();
+
+    $table->boolean('is_verified')->default(0);
+
+    $table->timestamps();
+});
+```
+
+---
+
+# video_edits Table Migration
+
+```php
+Schema::create('video_edits', function (Blueprint $table) {
+    $table->id();
+
+    $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+    $table->foreignId('news_id')->nullable()->constrained('news');
+
+    $table->string('video_file')->nullable();
+    $table->string('edited_video')->nullable();
+
+    $table->boolean('status')->default(0);
+
+    $table->timestamps();
+});
+```
+
+# News Application Database Dictionary (Laravel MySQL)
+
+# 1. users
+
+| Field Name    | Type                    | Description        |
+| ------------- | ----------------------- | ------------------ |
+| id            | BIGINT                  | Primary Key        |
+| name          | VARCHAR(255)            | User Name          |
+| mobile        | VARCHAR(20)             | Mobile Number      |
+| email         | VARCHAR(255)            | Email Address      |
+| password      | VARCHAR(255)            | Password           |
+| role          | ENUM(admin,editor,user) | User Role          |
+| language_id   | BIGINT                  | Preferred Language |
+| profile_image | VARCHAR(255)            | Profile Image      |
+| is_active     | TINYINT                 | Active Status      |
+| created_at    | TIMESTAMP               | Created Date       |
+| updated_at    | TIMESTAMP               | Updated Date       |
+
+---
+
+# 2. categories
+
+| Field Name | Type         | Description    |
+| ---------- | ------------ | -------------- |
+| id         | BIGINT       | Primary Key    |
+| name       | VARCHAR(255) | Category Name  |
+| slug       | VARCHAR(255) | URL Slug       |
+| image      | VARCHAR(255) | Category Image |
+| status     | TINYINT      | Active Status  |
+| created_at | TIMESTAMP    | Created Date   |
+| updated_at | TIMESTAMP    | Updated Date   |
+
+---
+
+# 3. languages
+
+| Field Name | Type         | Description   |
+| ---------- | ------------ | ------------- |
+| id         | BIGINT       | Primary Key   |
+| name       | VARCHAR(100) | Language Name |
+| code       | VARCHAR(20)  | Language Code |
+| status     | TINYINT      | Active Status |
+| created_at | TIMESTAMP    | Created Date  |
+| updated_at | TIMESTAMP    | Updated Date  |
+
+---
+
+# 4. news
+
+| Field Name        | Type                                | Description           |
+| ----------------- | ----------------------------------- | --------------------- |
+| id                | BIGINT                              | Primary Key           |
+| category_id       | BIGINT                              | Category Reference    |
+| user_id           | BIGINT                              | Editor/User Reference |
+| title             | VARCHAR(255)                        | News Title            |
+| slug              | VARCHAR(255)                        | URL Slug              |
+| short_description | TEXT                                | Short Description     |
+| description       | LONGTEXT                            | Full News Content     |
+| image             | VARCHAR(255)                        | Thumbnail Image       |
+| video             | VARCHAR(255)                        | Video File            |
+| news_type         | ENUM(normal,breaking,trending,live) | News Type             |
+| language_id       | BIGINT                              | Language Reference    |
+| is_featured       | TINYINT                             | Featured News         |
+| total_views       | BIGINT                              | Total Views           |
+| publish_date      | DATETIME                            | Publish Date          |
+| status            | TINYINT                             | Publish Status        |
+| created_at        | TIMESTAMP                           | Created Date          |
+| updated_at        | TIMESTAMP                           | Updated Date          |
+
+---
+
+# 5. live_streams
+
+| Field Name  | Type         | Description        |
+| ----------- | ------------ | ------------------ |
+| id          | BIGINT       | Primary Key        |
+| title       | VARCHAR(255) | Stream Title       |
+| stream_url  | TEXT         | Live Stream URL    |
+| thumbnail   | VARCHAR(255) | Stream Thumbnail   |
+| description | TEXT         | Stream Description |
+| start_time  | DATETIME     | Start Time         |
+| end_time    | DATETIME     | End Time           |
+| status      | TINYINT      | Active Status      |
+| created_at  | TIMESTAMP    | Created Date       |
+| updated_at  | TIMESTAMP    | Updated Date       |
+
+---
+
+# 6. banners
+
+| Field Name | Type         | Description     |
+| ---------- | ------------ | --------------- |
+| id         | BIGINT       | Primary Key     |
+| title      | VARCHAR(255) | Banner Title    |
+| image      | VARCHAR(255) | Banner Image    |
+| link       | TEXT         | Redirect Link   |
+| position   | VARCHAR(100) | Banner Position |
+| status     | TINYINT      | Active Status   |
+| created_at | TIMESTAMP    | Created Date    |
+| updated_at | TIMESTAMP    | Updated Date    |
+
+---
+
+# 7. user_favorite_categories
+
+| Field Name  | Type      | Description        |
+| ----------- | --------- | ------------------ |
+| id          | BIGINT    | Primary Key        |
+| user_id     | BIGINT    | User Reference     |
+| category_id | BIGINT    | Category Reference |
+| created_at  | TIMESTAMP | Created Date       |
+| updated_at  | TIMESTAMP | Updated Date       |
+
+---
+
+# 8. news_views
+
+| Field Name | Type         | Description    |
+| ---------- | ------------ | -------------- |
+| id         | BIGINT       | Primary Key    |
+| user_id    | BIGINT       | User Reference |
+| news_id    | BIGINT       | News Reference |
+| ip_address | VARCHAR(100) | Visitor IP     |
+| created_at | TIMESTAMP    | View Date      |
+| updated_at | TIMESTAMP    | Updated Date   |
+
+---
+
+# 9. comments
+
+| Field Name | Type      | Description     |
+| ---------- | --------- | --------------- |
+| id         | BIGINT    | Primary Key     |
+| user_id    | BIGINT    | User Reference  |
+| news_id    | BIGINT    | News Reference  |
+| comment    | TEXT      | User Comment    |
+| status     | TINYINT   | Approval Status |
+| created_at | TIMESTAMP | Created Date    |
+| updated_at | TIMESTAMP | Updated Date    |
+
+---
+
+# 10. notifications
+
+| Field Name | Type         | Description          |
+| ---------- | ------------ | -------------------- |
+| id         | BIGINT       | Primary Key          |
+| title      | VARCHAR(255) | Notification Title   |
+| message    | TEXT         | Notification Message |
+| user_id    | BIGINT       | User Reference       |
+| type       | VARCHAR(100) | Notification Type    |
+| is_read    | TINYINT      | Read Status          |
+| created_at | TIMESTAMP    | Created Date         |
+| updated_at | TIMESTAMP    | Updated Date         |
+
+---
+
+# 11. app_settings
+
+| Field Name       | Type         | Description        |
+| ---------------- | ------------ | ------------------ |
+| id               | BIGINT       | Primary Key        |
+| app_name         | VARCHAR(255) | Application Name   |
+| logo             | VARCHAR(255) | App Logo           |
+| contact_email    | VARCHAR(255) | Contact Email      |
+| contact_mobile   | VARCHAR(20)  | Contact Number     |
+| privacy_policy   | LONGTEXT     | Privacy Policy     |
+| terms_conditions | LONGTEXT     | Terms & Conditions |
+| about_us         | LONGTEXT     | About Us           |
+| created_at       | TIMESTAMP    | Created Date       |
+| updated_at       | TIMESTAMP    | Updated Date       |
+
+---
+
+# 12. otp_verifications
+
+| Field Name  | Type        | Description         |
+| ----------- | ----------- | ------------------- |
+| id          | BIGINT      | Primary Key         |
+| mobile      | VARCHAR(20) | Mobile Number       |
+| otp         | VARCHAR(10) | OTP Code            |
+| expire_at   | DATETIME    | Expiry Time         |
+| is_verified | TINYINT     | Verification Status |
+| created_at  | TIMESTAMP   | Created Date        |
+| updated_at  | TIMESTAMP   | Updated Date        |
+
+---
+
+# 13. video_edits
+
+| Field Name   | Type         | Description       |
+| ------------ | ------------ | ----------------- |
+| id           | BIGINT       | Primary Key       |
+| user_id      | BIGINT       | User Reference    |
+| news_id      | BIGINT       | News Reference    |
+| video_file   | VARCHAR(255) | Video File        |
+| edited_video | VARCHAR(255) | Edited Video      |
+| status       | TINYINT      | Processing Status |
+| created_at   | TIMESTAMP    | Created Date      |
+| updated_at   | TIMESTAMP    | Updated Date      |
+
+---
+
+# Laravel Create Model & Migration Commands
+
+```bash
+php artisan make:model User -m
+php artisan make:model Category -m
+php artisan make:model Language -m
+php artisan make:model News -m
+php artisan make:model LiveStream -m
+php artisan make:model Banner -m
+php artisan make:model UserFavoriteCategory -m
+php artisan make:model NewsView -m
+php artisan make:model Comment -m
+php artisan make:model Notification -m
+php artisan make:model AppSetting -m
+php artisan make:model OtpVerification -m
+php artisan make:model VideoEdit -m
+```
+
+---
+
+# Foreign Key Relationships
+
+| Table                                                | Relation    |
+| ---------------------------------------------------- | ----------- |
+| news.category_id → categories.id                     | Many to One |
+| news.user_id → users.id                              | Many to One |
+| news.language_id → languages.id                      | Many to One |
+| comments.user_id → users.id                          | Many to One |
+| comments.news_id → news.id                           | Many to One |
+| user_favorite_categories.user_id → users.id          | Many to One |
+| user_favorite_categories.category_id → categories.id | Many to One |
+| news_views.user_id → users.id                        | Many to One |
+| news_views.news_id → news.id                         | Many to One |
