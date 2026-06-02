@@ -19,16 +19,27 @@
             </div>
             <div class="sidebar-menu">
                 <ul>
-                    {{-- <li>
-                        <a href="{{ route('admin.dashboard') }}" class="active">
+                    <li>
+                        <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                             <i class="fas fa-tachometer-alt"></i> Dashboard
                         </a>
-                    </li> --}}
+                    </li>
                     <li>
-                        <a href="{{ route('admin.category.index') }}">
-                            <i class="fas fa-users"></i> Category
+                        <a href="{{ route('admin.user.index') }}" class="{{ request()->routeIs('admin.user.index') ? 'active' : '' }}">
+                            <i class="fas fa-users"></i> Users
                         </a>
                     </li>
+                    <li>
+                        <a href="{{ route('admin.language.index') }}" class="{{ request()->routeIs('admin.language.index') ? 'active' : '' }}">
+                            <i class="fas fa-language"></i> Languages
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.category.index') }}" class="{{ request()->routeIs('admin.category.index') ? 'active' : '' }}">
+                            <i class="fas fa-bookmark"></i> Category
+                        </a>
+                    </li>
+
 
                 </ul>
             </div>

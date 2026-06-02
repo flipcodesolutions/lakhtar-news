@@ -1,10 +1,10 @@
 @extends('admin.layout.app')
-@section('title', 'Lakhtar news - Add Category')
+@section('title', 'Lakhtar news - Edit Category')
 @section('main')
     <div class="main-content-inner">
         <div class="content-card">
             <div class="view-header">
-                <h2>Add Category</h2>
+                <h2>Edit Category</h2>
                 <a href="{{ route('admin.category.index') }}" class="btn">
                     <i class="fas fa-arrow-left"></i> Back to List
                 </a>

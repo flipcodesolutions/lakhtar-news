@@ -18,17 +18,29 @@
                 <img src="images/logo.png" alt="Admin Logo">
             </div>
             <h2 class="text-center mb-3">Admin Login</h2>
-            <form id="loginForm">
+            <form action="{{ route('admin.login.post') }}" method="post">
+                @csrf
                 <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" class="form-control" placeholder="Enter your username">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" class="form-control" placeholder="Enter your email">
+                    @error('email')
+                        <span class="text-danger">{{ $message }}</span>
+                    @enderror
                 </div>
                 <div class="form-group">
                     <label for="password">Password</label>
-                    <input type="password" id="password" class="form-control" placeholder="Enter your password">
+                    <input type="password" id="password" name="password" class="form-control" placeholder="Enter your password">
+                    @error('password')
+                        <span class="text-danger">{{ $message }}</span>
+                    @enderror
                 </div>
                 <div class="form-group">
                     <button type="submit" class="btn btn-block">Login</button>
+                    @if (session('error'))
+                        <div class="alert alert-danger">
+                            {{ session('error') }}
+                        </div>
+                    @endif
                 </div>
             </form>
         </div>
