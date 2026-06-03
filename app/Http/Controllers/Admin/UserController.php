@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Language;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -18,8 +17,7 @@ class UserController extends Controller
 
     public function create()
     {
-        $languages = Language::orderBy('id', 'desc')->get();
-        return view('admin.users.create', compact('languages'));
+        return view('admin.users.create');
     }
 
     public function store(Request $request)
@@ -28,14 +26,14 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'mobile' => 'required|string|max:255',
             'email' => 'required|email|max:255',
-            'language_id' => 'required|exists:languages,id',
+            'language' => 'required',
             'role' => 'required|string|max:255',
         ]);
         User::create([
             'name' => $request->name,
             'mobile' => $request->mobile,
             'email' => $request->email,
-            'language_id' => $request->language_id,
+            'language' => $request->language,
             'role' => $request->role,
             'password' => Hash::make($request->password),
         ]);
@@ -51,8 +49,7 @@ class UserController extends Controller
     public function edit($id)
     {
         $user = User::find($id);
-        $languages = Language::orderBy('id', 'desc')->get();
-        return view('admin.users.edit', compact('user', 'languages'));
+        return view('admin.users.edit', compact('user'));
     }
 
     public function update(Request $request, $id)
@@ -61,7 +58,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'mobile' => 'required|string|max:255',
             'email' => 'required|email|max:255',
-            'language_id' => 'required|exists:languages,id',
+            'language' => 'required',
             'role' => 'required|string|max:255',
         ]);
         $user = User::find($id);
@@ -69,7 +66,7 @@ class UserController extends Controller
             'name' => $request->name,
             'mobile' => $request->mobile,
             'email' => $request->email,
-            'language_id' => $request->language_id,
+            'language' => $request->language,
             'role' => $request->role,
         ]);
         return redirect()->route('admin.user.index')->with('success', 'User updated successfully');

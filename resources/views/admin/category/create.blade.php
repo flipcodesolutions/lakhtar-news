@@ -1,5 +1,6 @@
 @extends('admin.layout.app')
 @section('title', 'Lakhtar news - Add Category')
+
 @section('main')
     <div class="main-content-inner">
         <div class="content-card">
@@ -10,51 +11,67 @@
                 </a>
             </div>
 
-
-            <form id="adminForm">
-                <div class="form-row">
-                    <div class="form-col">
-                        <div class="form-group">
-                            <label for="name">Name</label>
-                            <input type="text" id="name" class="form-control" placeholder="Enter name">
-                        </div>
-                    </div>
-                    <div class="form-col">
-                        <div class="form-group">
-                            <label for="email">Email</label>
-                            <input type="email" id="email" class="form-control" placeholder="Enter email">
-                        </div>
-                    </div>
-                </div>
+            <form action="{{ route('admin.category.store') }}" method="POST" enctype="multipart/form-data">
+                @csrf
 
                 <div class="form-row">
-                    <div class="form-col">
-                        <div class="form-group">
-                            <label for="role">Role</label>
-                            <select id="role" class="form-control">
-                                <option value="">Select Role</option>
-                                <option value="admin">Admin</option>
-                                <option value="editor">Editor</option>
-                                <option value="user">User</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-col">
-                        <div class="form-group">
-                            <label for="status">Status</label>
-                            <select id="status" class="form-control">
-                                <option value="">Select Status</option>
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                                <option value="pending">Pending</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
 
-                <div class="form-group">
-                    <label for="bio">Bio</label>
-                    <textarea id="bio" class="form-control" rows="4" placeholder="Enter user bio"></textarea>
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="name">Name In English</label>
+                            <input type="text" name="name" id="name" value="{{ old('name') }}" class="form-control" placeholder="Enter name">
+
+                            @error('name')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="nameInHindi">Name In Hindi</label>
+                            <input type="text" name="nameInHindi" id="nameInHindi" value="{{ old('nameInHindi') }}" class="form-control" placeholder="Enter Hindi name">
+
+                            @error('nameInHindi')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="nameInGujarati">Name In Gujarati</label>
+                            <input type="text" name="nameInGujarati" id="nameInGujarati" value="{{ old('nameInGujarati') }}" class="form-control" placeholder="Enter Gujarati name">
+
+                            @error('nameInGujarati')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="image">Image</label>
+
+                            <input type="file" accept="image/*" name="image" id="image" class="form-control">
+
+                            @error('image')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
+
+                            <!-- Image Preview -->
+                            <div style="margin-top: 15px;">
+                                <img id="imagePreview" src="" alt="Image Preview" style="display:none;
+                                           width:200px;
+                                           height:200px;
+                                           object-fit:cover;
+                                           border:1px solid #ddd;
+                                           border-radius:8px;
+                                           padding:5px;">
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
 
                 <div class="form-group">
@@ -64,4 +81,33 @@
             </form>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+
+            const imageInput = document.getElementById('image');
+            const imagePreview = document.getElementById('imagePreview');
+
+            imageInput.addEventListener('change', function(e) {
+
+                const file = e.target.files[0];
+
+                if (!file) {
+                    imagePreview.style.display = 'none';
+                    imagePreview.src = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+
+                reader.onload = function(event) {
+                    imagePreview.src = event.target.result;
+                    imagePreview.style.display = 'block';
+                };
+
+                reader.readAsDataURL(file);
+            });
+
+        });
+    </script>
 @endsection

@@ -37,7 +37,9 @@
                                 <td> <span class="badge badge-{{ $user->is_active ? 'success' : 'danger' }}">{{ $user->is_active ? 'Active' : 'Inactive' }}</span></td>
                                 <td>
                                     <a href="{{ route('admin.user.edit', $user->id) }}" class="btn-sm"><i class="fas fa-edit"></i></a>
-                                    <a href="{{ route('admin.user.destroy', $user->id) }}" class="btn-sm"><i class="fas fa-trash"></i></a>
+                                    <a href="{{ route('admin.user.destroy', $user->id) }}" class="btn-sm delete-record">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
                                 </td>
                             </tr>
                         @empty
@@ -51,4 +53,6 @@
             </div>
         </div>
     </div>
+
+
 @endsection

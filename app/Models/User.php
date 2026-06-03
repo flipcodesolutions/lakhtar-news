@@ -23,7 +23,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
-        'language_id',
+        'language',
         'profile_image',
         'is_active',
     ];
@@ -48,11 +48,6 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_active' => 'boolean',
         ];
-    }
-
-    public function language()
-    {
-        return $this->belongsTo(Language::class);
     }
 
     public function news()

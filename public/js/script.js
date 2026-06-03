@@ -1,6 +1,45 @@
 // Admin Panel JavaScript
 
+function showToast(message, type) {
+  const container = document.getElementById("toast-container");
+  if (!container || !message) return;
+
+  const toast = document.createElement("div");
+  toast.className = `toast toast-${type}`;
+  toast.setAttribute("role", "alert");
+
+  const iconClass = type === "success" ? "fa-check-circle" : "fa-exclamation-circle";
+
+  toast.innerHTML = `
+    <i class="fas ${iconClass} toast-icon"></i>
+    <span class="toast-message"></span>
+    <button type="button" class="toast-close" aria-label="Close">&times;</button>
+  `;
+
+  toast.querySelector(".toast-message").textContent = message;
+  container.appendChild(toast);
+
+  requestAnimationFrame(() => toast.classList.add("show"));
+
+  const dismiss = () => {
+    toast.classList.remove("show");
+    toast.classList.add("hide");
+    setTimeout(() => toast.remove(), 300);
+  };
+
+  toast.querySelector(".toast-close").addEventListener("click", dismiss);
+  setTimeout(dismiss, 4000);
+}
+
 document.addEventListener("DOMContentLoaded", function () {
+  if (window.flashMessages) {
+    if (window.flashMessages.success) {
+      showToast(window.flashMessages.success, "success");
+    }
+    if (window.flashMessages.error) {
+      showToast(window.flashMessages.error, "error");
+    }
+  }
   // Create sidebar overlay if it doesn't exist
   let overlay = document.querySelector(".sidebar-overlay");
   if (!overlay) {

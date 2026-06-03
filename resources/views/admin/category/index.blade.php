@@ -17,6 +17,8 @@
                         <tr>
                             <th>Image</th>
                             <th>Name</th>
+                            <th>Name In Gujarati</th>
+                            <th>Name In Hindi</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -24,14 +26,22 @@
                     <tbody>
                         @forelse ($categories as $category)
                             <tr>
-                                <td><img src="" alt=""></td>
-                                <td>{{ $category->name }}</td>
-                                <td> <span class="badge badge-{{ $category->status ? 'success' : 'danger' }}">{{ $category->status ? 'Active' : 'Inactive' }}</span></td>
-                                <td><span class="badge badge-success">Active</span></td>
                                 <td>
-                                    <a href="view.html" class="btn-sm"><i class="fas fa-eye"></i></a>
-                                    <a href="form.html" class="btn-sm"><i class="fas fa-edit"></i></a>
-                                    <a href="#" class="btn-sm"><i class="fas fa-trash"></i></a>
+                                    @if ($category->image)
+                                        <img src="{{ asset($category->image) }}" alt="{{ $category->name }}" width="50" height="50" style="object-fit: cover; border-radius: 4px;">
+                                    @else
+                                        -
+                                    @endif
+                                </td>
+                                <td>{{ $category->name }}</td>
+                                <td>{{ $category->nameInGujarati }}</td>
+                                <td>{{ $category->nameInHindi }}</td>
+                                <td> <span class="badge badge-{{ $category->status ? 'success' : 'danger' }}">{{ $category->status ? 'Active' : 'Inactive' }}</span></td>
+                                <td>
+                                    <a href="{{ route('admin.category.edit', ['id' => $category->id]) }}" class="btn-sm">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{{ route('admin.category.destroy', ['id' => $category->id]) }}" class="btn-sm delete-record"><i class="fas fa-trash"></i></a>
                                 </td>
                             </tr>
                         @empty

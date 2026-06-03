@@ -61,9 +61,9 @@
                             <label for="language">Language</label>
                             <select id="language" name="language_id" class="form-control">
                                 <option selected disabled>-- Select Language --</option>
-                                @foreach ($languages as $language)
-                                    <option value="{{ $language->id }}">{{ $language->name }}</option>
-                                @endforeach
+                                <option value="eng">English</option>
+                                <option value="guj">Gujarati</option>
+                                <option value="hin">Hindi</option>
                             </select>
                             @error('status')
                                 <span class="text-danger">{{ $message }}</span>
@@ -100,3 +100,88 @@
         </div>
     </div>
 @endsection
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+
+        $('form').on('submit', function(e) {
+
+            let isValid = true;
+
+            $('.js-error').remove();
+
+            // Name
+            let name = $('#name').val().trim();
+            if (name === '') {
+                $('#name').after('<span class="text-danger js-error">Name is required</span>');
+                isValid = false;
+            }
+
+            // Email
+            let email = $('#email').val().trim();
+            let emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (email === '') {
+                $('#email').after('<span class="text-danger js-error">Email is required</span>');
+                isValid = false;
+            } else if (!emailRegex.test(email)) {
+                $('#email').after('<span class="text-danger js-error">Enter a valid email address</span>');
+                isValid = false;
+            }
+
+            // Mobile
+            let mobile = $('#mobile').val().trim();
+
+            if (mobile === '') {
+                $('#mobile').after('<span class="text-danger js-error">Mobile number is required</span>');
+                isValid = false;
+            } else if (!/^[0-9]{10}$/.test(mobile)) {
+                $('#mobile').after('<span class="text-danger js-error">Mobile number must be 10 digits</span>');
+                isValid = false;
+            }
+
+            // Role
+            let role = $('#role').val();
+            if (!role) {
+                $('#role').after('<span class="text-danger js-error">Please select a role</span>');
+                isValid = false;
+            }
+
+            // Language
+            let language = $('#language').val();
+            if (!language) {
+                $('#language').after('<span class="text-danger js-error">Please select a language</span>');
+                isValid = false;
+            }
+
+            // Password
+            let password = $('#password').val();
+
+            if (password === '') {
+                $('#password').after('<span class="text-danger js-error">Password is required</span>');
+                isValid = false;
+            } else if (password.length < 5) {
+                $('#password').after('<span class="text-danger js-error">Password must be at least 6 characters</span>');
+                isValid = false;
+            }
+
+            // Confirm Password
+            let confirmPassword = $('#password_confirmation').val();
+
+            if (confirmPassword === '') {
+                $('#password_confirmation').after('<span class="text-danger js-error">Confirm Password is required</span>');
+                isValid = false;
+            } else if (password !== confirmPassword) {
+                $('#password_confirmation').after('<span class="text-danger js-error">Passwords do not match</span>');
+                isValid = false;
+            }
+
+            if (!isValid) {
+                e.preventDefault();
+            }
+
+        });
+
+    });
+</script>

@@ -29,11 +29,7 @@
                             <i class="fas fa-users"></i> Users
                         </a>
                     </li>
-                    <li>
-                        <a href="{{ route('admin.language.index') }}" class="{{ request()->routeIs('admin.language.index') ? 'active' : '' }}">
-                            <i class="fas fa-language"></i> Languages
-                        </a>
-                    </li>
+
                     <li>
                         <a href="{{ route('admin.category.index') }}" class="{{ request()->routeIs('admin.category.index') ? 'active' : '' }}">
                             <i class="fas fa-bookmark"></i> Category
@@ -143,7 +139,48 @@
         </div>
     </div>
 
+    <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+    <script>
+        window.flashMessages = {
+            success: @json(session('success')),
+            error: @json(session('error')),
+        };
+    </script>
     <script src="{{ asset('js/script.js') }}"></script>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        $(document).ready(function() {
+
+            $('.delete-record').on('click', function(e) {
+
+                e.preventDefault();
+
+                let url = $(this).attr('href');
+
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "You won't be able to revert this user!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Yes, delete it!',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+
+                    if (result.isConfirmed) {
+                        window.location.href = url;
+                    }
+
+                });
+
+            });
+
+        });
+    </script>
 </body>
 
 </html>

@@ -14,6 +14,8 @@ class Category extends Model
         'slug',
         'image',
         'status',
+        'nameInHindi',
+        'nameInGujarati',
     ];
 
     protected function casts(): array
