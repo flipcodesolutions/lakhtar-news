@@ -48,7 +48,8 @@
                             <select id="role" name="role" class="form-control">
                                 <option selected disabled>-- Select Role --</option>
                                 <option value="admin">Admin</option>
-                                <option value="editor">Editor</option>
+                                {{-- <option value="editor">Editor</option> --}}
+                                <option value="reporter">Reporter</option>
                                 <option value="user">User</option>
                             </select>
                             @error('role')

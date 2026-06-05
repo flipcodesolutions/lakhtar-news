@@ -32,4 +32,14 @@ class AuthController extends Controller
         Auth::login($user);
         return redirect()->intended(route('admin.dashboard'));
     }
+
+    public function logout(Request $request)
+    {
+        Auth::logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('admin.login');
+    }
 }

@@ -12,13 +12,16 @@ class News extends Model
     protected $fillable = [
         'category_id',
         'user_id',
-        'language_id',
         'title',
         'slug',
-        'short_description',
         'description',
+        'titleInGujarati',
+        'descriptionInGujarati',
+        'titleInHindi',
+        'descriptionInHindi',
         'image',
         'video',
+        'video_thumbnail',
         'news_type',
         'is_featured',
         'total_views',
@@ -44,11 +47,6 @@ class News extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function language()
-    {
-        return $this->belongsTo(Language::class);
     }
 
     public function comments()

@@ -35,6 +35,11 @@
                             <i class="fas fa-bookmark"></i> Category
                         </a>
                     </li>
+                    <li>
+                        <a href="{{ route('admin.news.index') }}" class="{{ request()->routeIs('admin.news.index') ? 'active' : '' }}">
+                            <i class="fas fa-newspaper"></i> News
+                        </a>
+                    </li>
 
 
                 </ul>
@@ -111,7 +116,7 @@
                             <div class="user-avatar">
                                 <i class="fas fa-user"></i>
                             </div>
-                            <span class="user-name">Admin User</span>
+                            <span class="user-name">{{ Auth::user()?->name ?? 'User' }}</span>
                             <i class="fas fa-chevron-down"></i>
                         </div>
                         <div class="dropdown-menu user-dropdown">
@@ -125,9 +130,12 @@
                                 <i class="fas fa-key"></i> Change Password
                             </a>
                             <div class="dropdown-divider"></div>
-                            <a href="login.html" class="dropdown-item">
-                                <i class="fas fa-sign-out-alt"></i> Logout
-                            </a>
+                            <form action="{{ route('admin.logout') }}" method="POST">
+                                @csrf
+                                <button type="submit" class="dropdown-item" style="width: 100%; border: none; background: none; text-align: left; cursor: pointer;">
+                                    <i class="fas fa-sign-out-alt"></i> Logout
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>

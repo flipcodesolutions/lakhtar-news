@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\HomeController;
+use App\Http\Controllers\Admin\NewsController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -17,7 +18,9 @@ Route::get('/login', [AuthController::class, 'login'])->name('admin.login');
 Route::post('/login', [AuthController::class, 'loginPost'])->name('admin.login.post');
 
 
-Route::prefix('admin')->group(function () {
+Route::post('/logout', [AuthController::class, 'logout'])->name('admin.logout')->middleware('auth');
+
+Route::prefix('admin')->middleware('auth')->group(function () {
     // dashboard routes
     Route::get('/dashboard', [HomeController::class, 'dashboard'])->name('admin.dashboard');
 
@@ -35,5 +38,13 @@ Route::prefix('admin')->group(function () {
     Route::post('/category/store', [CategoryController::class, 'store'])->name('admin.category.store');
     Route::get('/category/edit/{id}', [CategoryController::class, 'edit'])->name('admin.category.edit');
     Route::put('/category/update', [CategoryController::class, 'update'])->name('admin.category.update');
-    Route::delete('/category/{id}', [CategoryController::class, 'destroy'])->name('admin.category.destroy');
+    Route::get('/category/delete/{id}', [CategoryController::class, 'destroy'])->name('admin.category.destroy');
+
+    // news routes
+    Route::get('/news', [NewsController::class, 'index'])->name('admin.news.index');
+    Route::get('/news/create', [NewsController::class, 'create'])->name('admin.news.create');
+    Route::post('/news/store', [NewsController::class, 'store'])->name('admin.news.store');
+    Route::get('/news/edit/{id}', [NewsController::class, 'edit'])->name('admin.news.edit');
+    Route::put('/news/update', [NewsController::class, 'update'])->name('admin.news.update');
+    Route::get('/news/delete/{id}', [NewsController::class, 'destroy'])->name('admin.news.destroy');
 });

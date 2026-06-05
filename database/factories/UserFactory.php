@@ -29,7 +29,6 @@ class UserFactory extends Factory
             'email' => fake()->optional()->safeEmail(),
             'password' => static::$password ??= Hash::make('password'),
             'role' => 'user',
-            'language_id' => null,
             'profile_image' => null,
             'is_active' => 1,
         ];
