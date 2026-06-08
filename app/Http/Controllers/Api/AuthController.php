@@ -399,6 +399,94 @@ class AuthController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="/profile",
+     *     tags={"User"},
+     *     summary="Get User Profile",
+     *     description="Retrieve the authenticated user's profile information.",
+     *     operationId="getProfile",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="User profile retrieved successfully.",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="success",
+     *                 type="boolean",
+     *                 example=true
+     *             ),
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="User profile retrieved successfully."
+     *             ),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="user",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="John Doe"),
+     *                     @OA\Property(property="email", type="string", example="john@example.com"),
+     *                     @OA\Property(property="mobile", type="string", example="9876543210"),
+     *                     @OA\Property(
+     *                         property="language",
+     *                         type="string",
+     *                         enum={"eng","hin","guj"},
+     *                         example="eng"
+     *                     ),
+     *                     @OA\Property(property="role", type="string", example="user"),
+     *                     @OA\Property(property="status", type="string", example="active"),
+     *                     @OA\Property(
+     *                         property="created_at",
+     *                         type="string",
+     *                         format="date-time",
+     *                         example="2026-06-08T12:00:00.000000Z"
+     *                     ),
+     *                     @OA\Property(
+     *                         property="updated_at",
+     *                         type="string",
+     *                         format="date-time",
+     *                         example="2026-06-08T12:00:00.000000Z"
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="Unauthenticated."
+     *             )
+     *         )
+     *     )
+     * )
+     */
+
+    public function getProfile()
+    {
+        $user = Auth::user();
+
+        $language = $user->language;
+        $message = match ($language) {
+            'eng' => 'User profile retrieved successfully.',
+            'hin' => 'उपयोगकर्ता प्रोफ़ाइल सफलतापूर्वक प्राप्त कर ली गई।',
+            'guj' => 'વપરાશકર્તા પ્રોફાઇલ સફળતાપૂર્વક મેળવી.',
+        };
+        return Util::getSuccessMessage($message, [
+            'user' => $user
+        ]);
+    }
+
+    /**
      * @OA\Put(
      *     path="/update-profile",
      *     summary="Update profile",
@@ -494,6 +582,13 @@ class AuthController extends Controller
                 'password' => 'required|string|min:6',
             ]);
 
+            $message = match ($request->language) {
+                'hin' => 'प्रोफ़ाइल सफलतापूर्वक अपडेट की गई.',
+                'guj' => 'પ્રોફાઇલ સફળતાપૂર્વક અપડેટ થઈ.',
+                default => 'Profile updated successfully',
+            };
+
+
 
             $user = User::where('mobile', $request->mobile)->first();
 
@@ -506,7 +601,7 @@ class AuthController extends Controller
                 $user->role = 'user';
                 $user->password = Hash::make($request->password);
                 $user->save();
-                return Util::getSuccessMessage('Profile updated successfully', [
+                return Util::getSuccessMessage($message, [
                     'user' => $user
                 ]);
             } else {
@@ -514,7 +609,7 @@ class AuthController extends Controller
                 $user->email = $request->email;
                 $user->language = $request->language;
                 $user->save();
-                return Util::getSuccessMessage('Profile updated successfully', [
+                return Util::getSuccessMessage($message, [
                     'user' => $user
                 ]);
             }
@@ -616,11 +711,17 @@ class AuthController extends Controller
                 'language' => 'required|in:eng,hin,guj',
             ]);
 
+            $message = match ($request->language) {
+                'hin' => 'भाषा सफलतापूर्वक बदली गई.',
+                'guj' => 'ભાષા સફળતાપૂર્વક બદલાઈ.',
+                default => 'Language changed successfully.',
+            };
+
             $user = User::find(Auth::user()->id);
             $user->language = $request->language;
             $user->save();
 
-            return Util::getSuccessMessage('Language changed successfully', [
+            return Util::getSuccessMessage($message, [
                 'user' => $user
             ]);
         } catch (\Exception $e) {

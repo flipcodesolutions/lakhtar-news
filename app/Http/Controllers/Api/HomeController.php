@@ -78,7 +78,7 @@ class HomeController extends Controller
     {
         $search = $request->input('search', '');
 
-        $language = Auth::user()?->language ?? 'en';
+        $language = Auth::user()?->language ?? 'eng';
         $column = match ($language) {
             'hin' => 'nameInHindi',
             'guj' => 'nameInGujarati',
@@ -106,7 +106,7 @@ class HomeController extends Controller
             ->get();
 
         return Util::getSuccessMessage(
-            $messages[$language] ?? $messages['en'],
+            $messages[$language] ?? $messages['eng'],
             [
                 'categories' => $categories
             ]
@@ -190,7 +190,7 @@ class HomeController extends Controller
      */
     public function getBreakingNews(Request $request)
     {
-        $language = Auth::user()?->language ?? 'en';
+        $language = Auth::user()?->language ?? 'eng';
 
         $titleColumn = match ($language) {
             'hin' => 'titleInHindi',
@@ -233,7 +233,7 @@ class HomeController extends Controller
             ->get();
 
         return Util::getSuccessMessage(
-            $messages[$language] ?? $messages['en'],
+            $messages[$language] ?? $messages['eng'],
             [
                 'news' => $news
             ]
@@ -316,7 +316,7 @@ class HomeController extends Controller
      */
     public function getTrendingNews(Request $request)
     {
-        $language = Auth::user()?->language ?? 'en';
+        $language = Auth::user()?->language ?? 'eng';
 
         $titleColumn = match ($language) {
             'hin' => 'titleInHindi',
@@ -359,7 +359,7 @@ class HomeController extends Controller
             ->get();
 
         return Util::getSuccessMessage(
-            $messages[$language] ?? $messages['en'],
+            $messages[$language] ?? $messages['eng'],
             [
                 'news' => $news
             ]
@@ -455,7 +455,7 @@ class HomeController extends Controller
      */
     public function getNewsDetails(Request $request, $id)
     {
-        $language = Auth::user()?->language ?? 'en';
+        $language = Auth::user()?->language ?? 'eng';
 
         $titleColumn = match ($language) {
             'hin' => 'titleInHindi',
@@ -473,6 +473,12 @@ class HomeController extends Controller
             'hin' => 'nameInHindi',
             'guj' => 'nameInGujarati',
             default => 'name',
+        };
+
+        $message = match ($language) {
+            'hin' => 'समाचार विवरण सफलतापूर्वक प्राप्त कर लिया गया।',
+            'guj' => 'સમાચાર વિગતો સફળતાપૂર્વક મેળવી.',
+            default => 'News details fetched successfully.',
         };
 
         $news = News::with([
@@ -505,8 +511,432 @@ class HomeController extends Controller
         ];
 
         return Util::getSuccessMessage(
-            'News details fetched successfully.',
+            $message,
             ['news' => $response]
         );
+    }
+
+
+    /**
+     * @OA\Get(
+     *     path="/video-news",
+     *     tags={"News"},
+     *     summary="Get Video News",
+     *     description="Fetch all news records that contain a video. Title and description are returned according to the authenticated user's selected language.",
+     *     operationId="getVideoNews",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Video news fetched successfully.",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="success",
+     *                 type="boolean",
+     *                 example=true
+     *             ),
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="Video news fetched successfully."
+     *             ),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="news",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(
+     *                             property="id",
+     *                             type="integer",
+     *                             example=1
+     *                         ),
+     *                         @OA\Property(
+     *                             property="title",
+     *                             type="string",
+     *                             example="Breaking News Video"
+     *                         ),
+     *                         @OA\Property(
+     *                             property="description",
+     *                             type="string",
+     *                             example="This is the video news description."
+     *                         ),
+     *                         @OA\Property(
+     *                             property="image",
+     *                             type="string",
+     *                             example="uploads/news/news-image.jpg"
+     *                         ),
+     *                         @OA\Property(
+     *                             property="video",
+     *                             type="string",
+     *                             example="uploads/news/video.mp4"
+     *                         ),
+     *                         @OA\Property(
+     *                             property="news_type",
+     *                             type="string",
+     *                             example="breaking"
+     *                         ),
+     *                         @OA\Property(
+     *                             property="created_at",
+     *                             type="string",
+     *                             format="date-time",
+     *                             example="2026-06-08T10:30:00.000000Z"
+     *                         )
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal Server Error",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="success",
+     *                 type="boolean",
+     *                 example=false
+     *             ),
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="Something went wrong."
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function getVideoNews(Request $request)
+    {
+        try {
+
+            $language = Auth::user()?->language ?? 'eng';
+
+            $titleColumn = match ($language) {
+                'hin' => 'titleInHindi',
+                'guj' => 'titleInGujarati',
+                default => 'title',
+            };
+
+            $descriptionColumn = match ($language) {
+                'hin' => 'descriptionInHindi',
+                'guj' => 'descriptionInGujarati',
+                default => 'description',
+            };
+
+            $message = match ($language) {
+                'hin' => 'वीडियो समाचार सफलतापूर्वक प्राप्त हो गया।',
+                'guj' => 'વિડિઓ સમાચાર સફળતાપૂર્વક મેળવ્યા.',
+                default => 'Video news fetched successfully.',
+            };
+
+            $news = News::whereNotNull('video')
+                ->where('video', '!=', '')
+                ->orderBy('id', 'desc')
+                ->get()
+                ->map(function ($item) use ($titleColumn, $descriptionColumn) {
+                    return [
+                        'id' => $item->id,
+                        'title' => $item->$titleColumn,
+                        'slug' => $item->slug,
+                        'description' => $item->$descriptionColumn,
+                        'image' => $item->image,
+                        'video' => $item->video,
+                        'total_views' => $item->total_views,
+                        'publish_date' => $item->publish_date,
+                        'news_type' => $item->news_type,
+                        'created_at' => $item->created_at,
+                    ];
+                });
+
+            return Util::getSuccessMessage(
+                $message,
+                [
+                    'news' => $news
+                ]
+            );
+        } catch (\Exception $e) {
+            return Util::getErrorMessage($e->getMessage());
+        }
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/get-news/{slug}",
+     *     tags={"News"},
+     *     summary="Get News By Slug",
+     *     description="Fetch news details by slug according to the authenticated user's selected language.",
+     *     operationId="getNewsBySlug",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(
+     *         name="slug",
+     *         in="path",
+     *         required=true,
+     *         description="News slug",
+     *         @OA\Schema(
+     *             type="string",
+     *             example="breaking-news-in-gujarat"
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="News details fetched successfully.",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="success",
+     *                 type="boolean",
+     *                 example=true
+     *             ),
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="News details fetched successfully."
+     *             ),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="news",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(
+     *                         property="title",
+     *                         type="string",
+     *                         example="Breaking News in Gujarat"
+     *                     ),
+     *                     @OA\Property(
+     *                         property="description",
+     *                         type="string",
+     *                         example="This is the detailed news description."
+     *                     ),
+     *                     @OA\Property(
+     *                         property="slug",
+     *                         type="string",
+     *                         example="breaking-news-in-gujarat"
+     *                     ),
+     *                     @OA\Property(
+     *                         property="image",
+     *                         type="string",
+     *                         example="uploads/news/news.jpg"
+     *                     ),
+     *                     @OA\Property(
+     *                         property="video",
+     *                         type="string",
+     *                         nullable=true,
+     *                         example="uploads/news/video.mp4"
+     *                     ),
+     *                     @OA\Property(
+     *                         property="news_type",
+     *                         type="string",
+     *                         example="breaking"
+     *                     ),
+     *                     @OA\Property(
+     *                         property="created_at",
+     *                         type="string",
+     *                         format="date-time",
+     *                         example="2026-06-08T10:30:00.000000Z"
+     *                     ),
+     *
+     *                     @OA\Property(
+     *                         property="category",
+     *                         type="object",
+     *                         @OA\Property(
+     *                             property="id",
+     *                             type="integer",
+     *                             example=5
+     *                         ),
+     *                         @OA\Property(
+     *                             property="name",
+     *                             type="string",
+     *                             example="Politics"
+     *                         )
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=404,
+     *         description="News not found.",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="success",
+     *                 type="boolean",
+     *                 example=false
+     *             ),
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="News not found."
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal Server Error",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="success",
+     *                 type="boolean",
+     *                 example=false
+     *             ),
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="Something went wrong."
+     *             )
+     *         )
+     *     )
+     * )
+     */
+
+    public function getNewsBySlug(Request $request, $slug)
+    {
+        try {
+
+            $language = Auth::user()?->language ?? 'eng';
+
+            $titleColumn = match ($language) {
+                'hin' => 'titleInHindi',
+                'guj' => 'titleInGujarati',
+                default => 'title',
+            };
+
+            $descriptionColumn = match ($language) {
+                'hin' => 'descriptionInHindi',
+                'guj' => 'descriptionInGujarati',
+                default => 'description',
+            };
+
+            $categoryColumn = match ($language) {
+                'hin' => 'nameInHindi',
+                'guj' => 'nameInGujarati',
+                default => 'name',
+            };
+
+            $message = match ($language) {
+                'hin' => 'समाचार विवरण सफलतापूर्वक प्राप्त कर लिया गया।',
+                'guj' => 'સમાચાર વિગતો સફળતાપૂર્વક મેળવી.',
+                default => 'News details fetched successfully.',
+            };
+
+            $news = News::with('category')
+                ->where('slug', $slug)
+                ->first();
+
+            if (!$news) {
+                return Util::getErrorMessage(
+                    'News not found.'
+                );
+            }
+
+            $response = [
+                'id' => $news->id,
+                'title' => $news->$titleColumn,
+                'description' => $news->$descriptionColumn,
+                'slug' => $news->slug,
+                'image' => $news->image,
+                'video' => $news->video,
+                'news_type' => $news->news_type,
+                'created_at' => $news->created_at,
+
+                'category' => [
+                    'id' => $news->category?->id,
+                    'name' => $news->category?->$categoryColumn,
+                ],
+            ];
+
+            return Util::getSuccessMessage(
+                $message,
+                [
+                    'news' => $response
+                ]
+            );
+        } catch (\Exception $e) {
+            return Util::getErrorMessage($e->getMessage());
+        }
+    }
+
+    public function getCategoryNews(Request $request, $id)
+    {
+        try {
+            $language = Auth::user()?->language ?? 'eng';
+
+            $categoryColumn = match ($language) {
+                'hin' => 'nameInHindi',
+                'guj' => 'nameInGujarati',
+                default => 'name',
+            };
+
+            $newsColumn = match ($language) {
+                'hin' => 'titleInHindi',
+                'guj' => 'titleInGujarati',
+                default => 'title',
+            };
+
+            $categoryDescriptionColumn = match ($language) {
+                'hin' => 'descriptionInHindi',
+                'guj' => 'descriptionInGujarati',
+                default => 'description',
+            };
+            $newsDescriptionColumn = match ($language) {
+                'hin' => 'descriptionInHindi',
+                'guj' => 'descriptionInGujarati',
+                default => 'description',
+            };
+
+
+            $message = match ($language) {
+                'hin' => 'समाचार विवरण सफलतापूर्वक प्राप्त कर लिया गया।',
+                'guj' => 'સમાચાર વિગતો સફળતાપૂર્વક મેળવી.',
+                default => 'Category news fetched successfully.',
+            };
+
+            $category = Category::with('news', function ($query) use ($newsColumn, $newsDescriptionColumn) {
+                $query->select($newsColumn, 'id', 'slug', 'image', 'video', $newsDescriptionColumn, 'publish_date', 'news_type', 'created_at');
+            })
+                ->where('id', $id)
+                ->first();
+
+            if (!$category) {
+                return Util::getErrorMessage(
+                    'Category not found.'
+                );
+            }
+
+            $response = [
+                'id' => $category->id,
+                'name' => $category->$categoryColumn,
+                'description' => $category->$categoryDescriptionColumn,
+                'news' => $category->news,
+            ];
+
+            return Util::getSuccessMessage(
+                $message,
+                [
+                    'category' => $response
+                ]
+            );
+        } catch (\Exception $e) {
+            return Util::getErrorMessage($e->getMessage());
+        }
     }
 }

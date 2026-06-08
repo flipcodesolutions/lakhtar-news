@@ -645,6 +645,90 @@
                 ]
             }
         },
+        "/my-interest": {
+            "get": {
+                "tags": [
+                    "Home"
+                ],
+                "summary": "Get My Interest Categories",
+                "operationId": "06e84fa40375593c45f0cebfe2034b37",
+                "responses": {
+                    "200": {
+                        "description": "My interests fetched successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "My interests fetched successfully."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "categories": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "category": {
+                                                                "type": "string",
+                                                                "example": "Politics"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Something went wrong"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/categories": {
             "get": {
                 "tags": [
@@ -1161,6 +1245,257 @@
                     }
                 ]
             }
+        },
+        "/video-news": {
+            "get": {
+                "tags": [
+                    "News"
+                ],
+                "summary": "Get Video News",
+                "description": "Fetch all news records that contain a video. Title and description are returned according to the authenticated user's selected language.",
+                "operationId": "getVideoNews",
+                "responses": {
+                    "200": {
+                        "description": "Video news fetched successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Video news fetched successfully."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "news": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "title": {
+                                                                "type": "string",
+                                                                "example": "Breaking News Video"
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "This is the video news description."
+                                                            },
+                                                            "image": {
+                                                                "type": "string",
+                                                                "example": "uploads/news/news-image.jpg"
+                                                            },
+                                                            "video": {
+                                                                "type": "string",
+                                                                "example": "uploads/news/video.mp4"
+                                                            },
+                                                            "news_type": {
+                                                                "type": "string",
+                                                                "example": "breaking"
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2026-06-08T10:30:00.000000Z"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Something went wrong."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/get-news/{slug}": {
+            "get": {
+                "tags": [
+                    "News"
+                ],
+                "summary": "Get News By Slug",
+                "description": "Fetch news details by slug according to the authenticated user's selected language.",
+                "operationId": "getNewsBySlug",
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "description": "News slug",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "breaking-news-in-gujarat"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "News details fetched successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "News details fetched successfully."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "news": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "title": {
+                                                            "type": "string",
+                                                            "example": "Breaking News in Gujarat"
+                                                        },
+                                                        "description": {
+                                                            "type": "string",
+                                                            "example": "This is the detailed news description."
+                                                        },
+                                                        "slug": {
+                                                            "type": "string",
+                                                            "example": "breaking-news-in-gujarat"
+                                                        },
+                                                        "image": {
+                                                            "type": "string",
+                                                            "example": "uploads/news/news.jpg"
+                                                        },
+                                                        "video": {
+                                                            "type": "string",
+                                                            "example": "uploads/news/video.mp4",
+                                                            "nullable": true
+                                                        },
+                                                        "news_type": {
+                                                            "type": "string",
+                                                            "example": "breaking"
+                                                        },
+                                                        "created_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2026-06-08T10:30:00.000000Z"
+                                                        },
+                                                        "category": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 5
+                                                                },
+                                                                "name": {
+                                                                    "type": "string",
+                                                                    "example": "Politics"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "News not found.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "News not found."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Something went wrong."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -1183,12 +1518,16 @@
             "description": "User"
         },
         {
+            "name": "Home",
+            "description": "Home"
+        },
+        {
             "name": "Categories",
             "description": "Categories"
         },
         {
-            "name": "Home",
-            "description": "Home"
+            "name": "News",
+            "description": "News"
         }
     ]
 }
