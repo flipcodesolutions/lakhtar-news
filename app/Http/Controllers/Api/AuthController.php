@@ -4,9 +4,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\UserFavoriteCategory;
 use App\Utils\Util;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
@@ -232,11 +235,175 @@ class AuthController extends Controller
     }
 
     /**
+     * @OA\Post(
+     *     path="/register",
+     *     tags={"Authentication"},
+     *     summary="User Registration",
+     *     description="Register a new user with selected interest categories.",
+     *     operationId="registerUser",
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"mobile","name","email","language","interest"},
+     *
+     *             @OA\Property(
+     *                 property="mobile",
+     *                 type="string",
+     *                 example="9876543210"
+     *             ),
+     *             @OA\Property(
+     *                 property="name",
+     *                 type="string",
+     *                 example="John Doe"
+     *             ),
+     *             @OA\Property(
+     *                 property="email",
+     *                 type="string",
+     *                 format="email",
+     *                 example="john@example.com"
+     *             ),
+     *             @OA\Property(
+     *                 property="language",
+     *                 type="string",
+     *                 enum={"eng","hin","guj"},
+     *                 example="eng"
+     *             ),
+     *             @OA\Property(
+     *                 property="interest",
+     *                 type="array",
+     *                 description="Array of category IDs",
+     *                 @OA\Items(
+     *                     type="integer",
+     *                     example=1
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="User registered successfully.",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="success",
+     *                 type="boolean",
+     *                 example=true
+     *             ),
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="User registered successfully."
+     *             ),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="user",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="John Doe"),
+     *                     @OA\Property(property="email", type="string", example="john@example.com"),
+     *                     @OA\Property(property="mobile", type="string", example="9876543210"),
+     *                     @OA\Property(property="language", type="string", example="eng"),
+     *                     @OA\Property(property="role", type="string", example="user"),
+     *                     @OA\Property(
+     *                         property="created_at",
+     *                         type="string",
+     *                         format="date-time"
+     *                     ),
+     *                     @OA\Property(
+     *                         property="updated_at",
+     *                         type="string",
+     *                         format="date-time"
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation Error",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="The given data was invalid."
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal Server Error",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="success",
+     *                 type="boolean",
+     *                 example=false
+     *             ),
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="Something went wrong."
+     *             )
+     *         )
+     *     )
+     * )
+     */
+
+    public function register(Request $request)
+    {
+        try {
+
+            $request->validate([
+                'mobile' => 'required|digits:10|unique:users,mobile',
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|max:255|unique:users,email',
+                'language' => 'required|in:eng,hin,guj',
+                'interest' => 'required|array|min:1',
+                'interest.*' => 'exists:categories,id',
+            ]);
+
+            DB::beginTransaction();
+
+            $user = User::create([
+                'mobile' => $request->mobile,
+                'name' => $request->name,
+                'email' => $request->email,
+                'language' => $request->language,
+                'role' => 'user',
+                'password' => Hash::make('123456'),
+            ]);
+
+            foreach ($request->interest as $categoryId) {
+                UserFavoriteCategory::create([
+                    'user_id' => $user->id,
+                    'category_id' => $categoryId,
+                ]);
+            }
+
+            DB::commit();
+
+            return Util::getSuccessMessage('User registered successfully.', [
+                'user' => $user
+            ]);
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            return Util::getErrorMessage($e->getMessage());
+        }
+    }
+
+    /**
      * @OA\Put(
      *     path="/update-profile",
      *     summary="Update profile",
      *     description="Updates the user profile with the provided information.",
-     *     tags={"Authentication"},
+     *     tags={"User"},
      *     security={{"sanctum": {}}},
      *     @OA\RequestBody(
      *         required=true,
@@ -351,6 +518,204 @@ class AuthController extends Controller
                     'user' => $user
                 ]);
             }
+        } catch (\Exception $e) {
+            return Util::getErrorMessage($e->getMessage());
+        }
+    }
+
+    /**
+     * @OA\Put(
+     *     path="/change-language",
+     *     tags={"User"},
+     *     summary="Change User Language",
+     *     description="Update the authenticated user's preferred language.",
+     *     operationId="changeLanguage",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"language"},
+     *             @OA\Property(
+     *                 property="language",
+     *                 type="string",
+     *                 enum={"eng","hin","guj"},
+     *                 example="guj",
+     *                 description="User preferred language"
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Language changed successfully",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="success",
+     *                 type="boolean",
+     *                 example=true
+     *             ),
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="Language changed successfully"
+     *             ),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="user",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="John Doe"),
+     *                     @OA\Property(property="email", type="string", example="john@example.com"),
+     *                     @OA\Property(property="mobile", type="string", example="9876543210"),
+     *                     @OA\Property(property="language", type="string", example="guj"),
+     *                     @OA\Property(property="role", type="string", example="user"),
+     *                     @OA\Property(property="created_at", type="string", format="date-time"),
+     *                     @OA\Property(property="updated_at", type="string", format="date-time")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation Error",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="The selected language is invalid."
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal Server Error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Something went wrong.")
+     *         )
+     *     )
+     * )
+     */
+
+
+    public function changeLanguage(Request $request)
+    {
+        try {
+            $request->validate([
+                'language' => 'required|in:eng,hin,guj',
+            ]);
+
+            $user = User::find(Auth::user()->id);
+            $user->language = $request->language;
+            $user->save();
+
+            return Util::getSuccessMessage('Language changed successfully', [
+                'user' => $user
+            ]);
+        } catch (\Exception $e) {
+            return Util::getErrorMessage($e->getMessage());
+        }
+    }
+
+    // my interest
+
+    /**
+     * @OA\Get(
+     *     path="/my-interest",
+     *     summary="Get My Interest Categories",
+     *     tags={"Home"},
+     *     security={{"bearerAuth":{}}},
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="My interests fetched successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="My interests fetched successfully."),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="categories",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="category", type="string", example="Politics")
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=400,
+     *         description="Error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Something went wrong"),
+     *             @OA\Property(property="data", type="object", nullable=true)
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
+    public function getMyInterest()
+    {
+        try {
+
+            $language = Auth::user()?->language ?? 'eng';
+
+            $categoryColumn = match ($language) {
+                'hin' => 'categoryHindi',
+                'guj' => 'categoryGujarati',
+                default => 'categoryEnglish',
+            };
+
+            $categories = UserFavoriteCategory::with('category')
+                ->where('user_id', Auth::id())
+                ->get()
+                ->map(function ($item) use ($categoryColumn) {
+                    return [
+                        'id' => $item->category?->id,
+                        'category' => $item->category?->$categoryColumn,
+                    ];
+                });
+
+            return Util::getSuccessMessage('My interest', [
+                'categories' => $categories
+            ]);
+        } catch (\Exception $e) {
+            return Util::getErrorMessage($e->getMessage());
+        }
+    }
+
+    public function updateMyInterest(Request $request)
+    {
+        try {
+            $request->validate([
+                'categories' => 'required|array',
+            ]);
+
+            $user = User::find(Auth::user()->id);
+            $user->userFavoriteCategories()->sync($request->categories);
+
+            return Util::getSuccessMessage('My interest updated successfully');
         } catch (\Exception $e) {
             return Util::getErrorMessage($e->getMessage());
         }
