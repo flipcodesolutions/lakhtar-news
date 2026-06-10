@@ -11,9 +11,27 @@ use Illuminate\Support\Str;
 
 class NewsController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $news = News::orderBy('id', 'desc')->get();
+        $news = News::with(['category', 'user'])
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = $request->search;
+
+                $query->where(function ($subQuery) use ($search) {
+                    $subQuery->where('title', 'like', "%{$search}%")
+                        ->orWhere('titleInHindi', 'like', "%{$search}%")
+                        ->orWhere('titleInGujarati', 'like', "%{$search}%")
+                        ->orWhereHas('category', fn($categoryQuery) => $categoryQuery->where('name', 'like', "%{$search}%"));
+                });
+            })
+            ->when($request->filled('status'), fn($query) => $query->where('status', $request->status))
+            ->when($request->filled('news_type'), fn($query) => $query->where('news_type', $request->news_type))
+            ->when($request->filled('featured'), function ($query) use ($request) {
+                $query->where('is_featured', $request->featured === 'yes');
+            })
+            ->orderBy('id', 'desc')
+            ->get();
+
         return view('admin.news.index', compact('news'));
     }
     public function create()
@@ -126,14 +144,34 @@ class NewsController extends Controller
         }
     }
 
-    public function reporterIndex()
+    public function reporterIndex(Request $request)
     {
+        $selectedStatus = $request->input('status', 'pending');
+
+        if (! in_array($selectedStatus, ['pending', 'approved', 'rejected'], true)) {
+            $selectedStatus = 'pending';
+        }
+
         $news = News::with(['category', 'user'])
-            ->whereHas('user', fn ($query) => $query->where('role', '!=', 'admin'))
+            ->whereHas('user', fn($query) => $query->where('role', '!=', 'admin'))
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = $request->search;
+
+                $query->where(function ($subQuery) use ($search) {
+                    $subQuery->where('title', 'like', "%{$search}%")
+                        ->orWhere('titleInHindi', 'like', "%{$search}%")
+                        ->orWhere('titleInGujarati', 'like', "%{$search}%")
+                        ->orWhereHas('category', fn($categoryQuery) => $categoryQuery->where('name', 'like', "%{$search}%"))
+                        ->orWhereHas('user', fn($userQuery) => $userQuery
+                            ->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%"));
+                });
+            })
+            ->where('status', $selectedStatus)
             ->orderByDesc('id')
             ->get();
 
-        return view('admin.reporter-news.index', compact('news'));
+        return view('admin.reporter-news.index', compact('news', 'selectedStatus'));
     }
 
     public function changeStatus($id, $status)

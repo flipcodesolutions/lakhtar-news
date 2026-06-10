@@ -168,6 +168,35 @@
                 <h2>Reporter News List</h2>
             </div>
 
+            <form method="GET" action="{{ route('admin.reporter-news.index') }}" class="list-filter-form">
+                <div class="list-filter-grid reporter-filter-grid">
+                    <div class="list-filter-field list-filter-search">
+                        <label for="reporter-news-search">Search</label>
+                        <input type="text" id="reporter-news-search" name="search" class="form-control" value="{{ request('search') }}" placeholder="Search by title, reporter, email, or category">
+                    </div>
+                    <div class="list-filter-field">
+                        <label for="reporter-news-status">Status</label>
+                        <select id="reporter-news-status" name="status" class="form-control">
+                            <option value="pending" {{ ($selectedStatus ?? 'pending') === 'pending' ? 'selected' : '' }}>Pending</option>
+                            <option value="approved" {{ ($selectedStatus ?? 'pending') === 'approved' ? 'selected' : '' }}>Approved</option>
+                            <option value="rejected" {{ ($selectedStatus ?? 'pending') === 'rejected' ? 'selected' : '' }}>Rejected</option>
+                        </select>
+                    </div>
+                    <div class="list-filter-actions">
+                        <button type="submit" class="btn">
+                            <i class="fas fa-search"></i> Apply
+                        </button>
+                        <a href="{{ route('admin.reporter-news.index') }}" class="btn btn-secondary">
+                            <i class="fas fa-undo"></i> Reset
+                        </a>
+                    </div>
+                </div>
+            </form>
+
+            <div class="list-results-meta">
+                Showing <strong>{{ $news->count() }}</strong> reporter submissions
+            </div>
+
             <div class="table-container">
                 <table class="data-table">
                     <thead>

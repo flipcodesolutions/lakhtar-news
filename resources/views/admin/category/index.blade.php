@@ -10,6 +10,36 @@
                 </a>
             </div>
 
+            <form method="GET" action="{{ route('admin.category.index') }}" class="list-filter-form">
+                <div class="list-filter-grid">
+                    <div class="list-filter-field list-filter-search">
+                        <label for="category-search">Search</label>
+                        <input type="text" id="category-search" name="search" class="form-control" value="{{ request('search') }}"
+                            placeholder="Search by category name">
+                    </div>
+                    <div class="list-filter-field">
+                        <label for="category-status">Status</label>
+                        <select id="category-status" name="status" class="form-control">
+                            <option value="">All Status</option>
+                            <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
+                            <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Inactive</option>
+                        </select>
+                    </div>
+                    <div class="list-filter-actions">
+                        <button type="submit" class="btn">
+                            <i class="fas fa-search"></i> Apply
+                        </button>
+                        <a href="{{ route('admin.category.index') }}" class="btn btn-secondary">
+                            <i class="fas fa-undo"></i> Reset
+                        </a>
+                    </div>
+                </div>
+            </form>
+
+            <div class="list-results-meta">
+                Showing <strong>{{ $categories->count() }}</strong> categories
+            </div>
+
 
             <div class="table-container">
                 <table class="data-table">

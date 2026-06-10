@@ -9,9 +9,22 @@ use Illuminate\Support\Str;
 
 class CategoryController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $categories = Category::orderBy('id', 'desc')->get();
+        $categories = Category::query()
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = $request->search;
+
+                $query->where(function ($subQuery) use ($search) {
+                    $subQuery->where('name', 'like', "%{$search}%")
+                        ->orWhere('nameInGujarati', 'like', "%{$search}%")
+                        ->orWhere('nameInHindi', 'like', "%{$search}%");
+                });
+            })
+            ->when($request->filled('status'), fn ($query) => $query->where('status', $request->status === 'active'))
+            ->orderBy('id', 'desc')
+            ->get();
+
         return view('admin.category.index', compact('categories'));
     }
 

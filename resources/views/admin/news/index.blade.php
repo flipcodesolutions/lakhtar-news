@@ -10,6 +10,55 @@
                 </a>
             </div>
 
+            <form method="GET" action="{{ route('admin.news.index') }}" class="list-filter-form">
+                <div class="list-filter-grid">
+                    <div class="list-filter-field list-filter-search">
+                        <label for="news-search">Search</label>
+                        <input type="text" id="news-search" name="search" class="form-control" value="{{ request('search') }}"
+                            placeholder="Search by title or category">
+                    </div>
+                    <div class="list-filter-field">
+                        <label for="news-status">Status</label>
+                        <select id="news-status" name="status" class="form-control">
+                            <option value="">All Status</option>
+                            <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
+                            <option value="approved" {{ request('status') === 'approved' ? 'selected' : '' }}>Approved</option>
+                            <option value="rejected" {{ request('status') === 'rejected' ? 'selected' : '' }}>Rejected</option>
+                        </select>
+                    </div>
+                    <div class="list-filter-field">
+                        <label for="news-type">News Type</label>
+                        <select id="news-type" name="news_type" class="form-control">
+                            <option value="">All Types</option>
+                            <option value="normal" {{ request('news_type') === 'normal' ? 'selected' : '' }}>Normal</option>
+                            <option value="breaking" {{ request('news_type') === 'breaking' ? 'selected' : '' }}>Breaking</option>
+                            <option value="trending" {{ request('news_type') === 'trending' ? 'selected' : '' }}>Trending</option>
+                            <option value="live" {{ request('news_type') === 'live' ? 'selected' : '' }}>Live</option>
+                        </select>
+                    </div>
+                    <div class="list-filter-field">
+                        <label for="news-featured">Featured</label>
+                        <select id="news-featured" name="featured" class="form-control">
+                            <option value="">All</option>
+                            <option value="yes" {{ request('featured') === 'yes' ? 'selected' : '' }}>Featured</option>
+                            <option value="no" {{ request('featured') === 'no' ? 'selected' : '' }}>Not Featured</option>
+                        </select>
+                    </div>
+                    <div class="list-filter-actions">
+                        <button type="submit" class="btn">
+                            <i class="fas fa-search"></i> Apply
+                        </button>
+                        <a href="{{ route('admin.news.index') }}" class="btn btn-secondary">
+                            <i class="fas fa-undo"></i> Reset
+                        </a>
+                    </div>
+                </div>
+            </form>
+
+            <div class="list-results-meta">
+                Showing <strong>{{ $news->count() }}</strong> news articles
+            </div>
+
             <div class="table-container">
                 <table class="data-table">
                     <thead>

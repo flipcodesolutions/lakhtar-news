@@ -10,6 +10,45 @@
                 </a>
             </div>
 
+            <form method="GET" action="{{ route('admin.user.index') }}" class="list-filter-form">
+                <div class="list-filter-grid">
+                    <div class="list-filter-field list-filter-search">
+                        <label for="user-search">Search</label>
+                        <input type="text" id="user-search" name="search" class="form-control" value="{{ request('search') }}"
+                            placeholder="Search by name, email, or mobile">
+                    </div>
+                    <div class="list-filter-field">
+                        <label for="user-role">Role</label>
+                        <select id="user-role" name="role" class="form-control">
+                            <option value="">All Roles</option>
+                            <option value="admin" {{ request('role') === 'admin' ? 'selected' : '' }}>Admin</option>
+                            <option value="reporter" {{ request('role') === 'reporter' ? 'selected' : '' }}>Reporter</option>
+                            <option value="user" {{ request('role') === 'user' ? 'selected' : '' }}>User</option>
+                        </select>
+                    </div>
+                    <div class="list-filter-field">
+                        <label for="user-status">Status</label>
+                        <select id="user-status" name="status" class="form-control">
+                            <option value="">All Status</option>
+                            <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
+                            <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Inactive</option>
+                        </select>
+                    </div>
+                    <div class="list-filter-actions">
+                        <button type="submit" class="btn">
+                            <i class="fas fa-search"></i> Apply
+                        </button>
+                        <a href="{{ route('admin.user.index') }}" class="btn btn-secondary">
+                            <i class="fas fa-undo"></i> Reset
+                        </a>
+                    </div>
+                </div>
+            </form>
+
+            <div class="list-results-meta">
+                Showing <strong>{{ $users->count() }}</strong> users
+            </div>
+
 
             <div class="table-container">
                 <table class="data-table">

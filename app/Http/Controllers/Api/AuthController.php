@@ -734,7 +734,7 @@ class AuthController extends Controller
      * @OA\Get(
      *     path="/my-interest",
      *     summary="Get My Interest Categories",
-     *     tags={"Home"},
+     *     tags={"User"},
      *     security={{"bearerAuth":{}}},
      *
      *     @OA\Response(
@@ -805,6 +805,98 @@ class AuthController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/update-my-interest",
+     *     tags={"User"},
+     *     summary="Update My Interests",
+     *     description="Update the authenticated user's favorite categories/interests.",
+     *     operationId="updateMyInterest",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"categories"},
+     *
+     *             @OA\Property(
+     *                 property="categories",
+     *                 type="array",
+     *                 description="Array of category IDs",
+     *                 @OA\Items(
+     *                     type="integer",
+     *                     example=1
+     *                 ),
+     *                 example={1,2,3}
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="My interest updated successfully",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="success",
+     *                 type="boolean",
+     *                 example=true
+     *             ),
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="My interest updated successfully"
+     *             ),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items()
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation Error",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="The categories field is required."
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="Unauthenticated."
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal Server Error",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="success",
+     *                 type="boolean",
+     *                 example=false
+     *             ),
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="Something went wrong."
+     *             )
+     *         )
+     *     )
+     * )
+     */
     public function updateMyInterest(Request $request)
     {
         try {
