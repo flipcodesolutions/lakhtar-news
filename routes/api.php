@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\HomeController;
+use App\Http\Controllers\Api\ReporterController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -35,4 +36,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/update-my-interest', [AuthController::class, 'updateMyInterest']);
     Route::get('/video-news', [HomeController::class, 'getVideoNews']);
     Route::get('/get-news/{slug}', [HomeController::class, 'getNewsBySlug']);
+
+
+
+    // Reporter side's APIs
+    Route::get('/my-news', [ReporterController::class, 'getMyNews']);
+    Route::post('/create-news', [ReporterController::class, 'createNews']);
+    Route::put('/update-news/{id}', [ReporterController::class, 'updateNews']);
+    Route::delete('/delete-news/{id}', [ReporterController::class, 'deleteNews']);
 });

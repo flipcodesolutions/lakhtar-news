@@ -57,7 +57,9 @@
             gap: 24px;
         }
 
-        .editor-card, .sidebar-card, .actions-card {
+        .editor-card,
+        .sidebar-card,
+        .actions-card {
             background: #ffffff;
             border-radius: var(--border-radius);
             box-shadow: var(--shadow-md);
@@ -66,7 +68,8 @@
             transition: box-shadow 0.3s ease;
         }
 
-        .editor-card:hover, .sidebar-card:hover {
+        .editor-card:hover,
+        .sidebar-card:hover {
             box-shadow: var(--shadow-lg);
         }
 
@@ -134,8 +137,15 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(4px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(4px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         /* Form Controls */
@@ -208,7 +218,7 @@
             transition: all 0.2s ease;
         }
 
-        .radio-toggle-label input:checked + span {
+        .radio-toggle-label input:checked+span {
             background-color: var(--primary-color);
             color: #ffffff;
             box-shadow: var(--shadow-sm);
@@ -290,7 +300,8 @@
             z-index: 3;
         }
 
-        .upload-preview img, .upload-preview video {
+        .upload-preview img,
+        .upload-preview video {
             width: 100%;
             height: 100%;
             object-fit: cover;
@@ -386,7 +397,9 @@
             .news-grid {
                 flex-direction: column;
             }
-            .news-main, .news-sidebar {
+
+            .news-main,
+            .news-sidebar {
                 flex: 1 1 100%;
                 max-width: 100%;
             }
@@ -574,43 +587,11 @@
                         <!-- Video File Upload -->
                         <div class="form-group">
                             <label>News Video <span class="upload-optional">(Optional)</span></label>
-                            <div class="upload-zone" id="video-upload-zone">
-                                <input type="file" accept="video/*" name="video" id="video" class="file-input">
-                                <div class="upload-placeholder" style="{{ $news->video ? 'display:none;' : '' }}">
-                                    <i class="fas fa-video"></i>
-                                    <span class="upload-text">Choose video or drag here</span>
-                                    <span class="upload-hint">MP4, MOV, AVI (Max 20MB)</span>
-                                </div>
-                                <div class="upload-preview" id="video-preview-container" style="{{ $news->video ? 'display:flex;' : 'display:none;' }}">
-                                    <video id="videoPreview" src="{{ $news->video ? asset($news->video) : '' }}" controls></video>
-                                    <button type="button" class="remove-preview-btn" data-input-id="video" title="Remove video">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
+                            <div class="form-group" id="video-upload-zone">
+                                <input type="text" name="video" id="video" placeholder="Enter video URL" value="{{ old('video', $news->video) }}" class="form-control">
+
                             </div>
                             @error('video')
-                                <span class="text-danger">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <!-- Video Thumbnail Upload (Required ONLY when video exists) -->
-                        <div class="form-group" id="video-thumbnail-group" style="{{ $news->video ? 'display:block;' : 'display:none;' }}">
-                            <label>Video Thumbnail <span class="required-asterisk">*</span></label>
-                            <div class="upload-zone" id="thumbnail-upload-zone">
-                                <input type="file" accept="image/*" name="video_thumbnail" id="video_thumbnail" class="file-input">
-                                <div class="upload-placeholder" style="{{ $news->video_thumbnail ? 'display:none;' : '' }}">
-                                    <i class="fas fa-image"></i>
-                                    <span class="upload-text">Choose thumbnail</span>
-                                    <span class="upload-hint">JPG, PNG, WEBP (Max 2MB)</span>
-                                </div>
-                                <div class="upload-preview" id="thumbnail-preview-container" style="{{ $news->video_thumbnail ? 'display:flex;' : 'display:none;' }}">
-                                    <img id="videoThumbnailPreview" src="{{ $news->video_thumbnail ? asset($news->video_thumbnail) : '' }}" alt="Thumbnail Preview">
-                                    <button type="button" class="remove-preview-btn" data-input-id="video_thumbnail" title="Remove thumbnail">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            @error('video_thumbnail')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div>
@@ -677,7 +658,7 @@
             // Setup file inputs listeners
             Object.keys(mediaConfigs).forEach(key => {
                 const config = mediaConfigs[key];
-                
+
                 config.input.addEventListener('change', function(e) {
                     const file = e.target.files[0];
                     if (file) {

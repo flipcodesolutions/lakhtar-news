@@ -22,22 +22,26 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'mobile' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'language' => 'required',
-            'role' => 'required|string|max:255',
-        ]);
-        User::create([
-            'name' => $request->name,
-            'mobile' => $request->mobile,
-            'email' => $request->email,
-            'language' => $request->language,
-            'role' => $request->role,
-            'password' => Hash::make($request->password),
-        ]);
-        return redirect()->route('admin.user.index')->with('success', 'User created successfully');
+        try {
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'mobile' => 'required|string|max:255',
+                'email' => 'required|email|max:255',
+                'language' => 'required',
+                'role' => 'required|string|max:255',
+            ]);
+            $user = new User();
+            $user->name = $request->name;
+            $user->mobile = $request->mobile;
+            $user->email = $request->email;
+            $user->language = $request->language;
+            $user->role = $request->role;
+            $user->password = Hash::make($request->password);
+            $user->save();
+            return redirect()->route('admin.user.index')->with('success', 'User created successfully');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'User creation failed. Please try again later');
+        }
     }
 
     public function show($id)

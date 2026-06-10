@@ -40,6 +40,11 @@
                             <i class="fas fa-newspaper"></i> News
                         </a>
                     </li>
+                    <li>
+                        <a href="{{ route('admin.reporter-news.index') }}" class="{{ request()->routeIs('admin.reporter-news.index') ? 'active' : '' }}">
+                            <i class="fas fa-user"></i> Reporter News
+                        </a>
+                    </li>
 
 
                 </ul>
@@ -58,10 +63,10 @@
                             <span></span>
                         </div>
                     </button>
-                    <h1 class="page-title">Dashboard</h1>
+                    <h1 class="page-title">@yield('title')</h1>
                 </div>
                 <div class="top-bar-right">
-                    <div class="dropdown">
+                    {{-- <div class="dropdown">
                         <div class="notifications dropdown-toggle">
                             <i class="fas fa-bell"></i>
                             <span class="notification-badge">3</span>
@@ -109,7 +114,7 @@
                                 <a href="#" class="dropdown-link">View all notifications</a>
                             </div>
                         </div>
-                    </div>
+                    </div> --}}
 
                     <div class="dropdown">
                         <div class="user-info dropdown-toggle">

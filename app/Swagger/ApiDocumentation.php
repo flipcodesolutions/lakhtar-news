@@ -10,7 +10,12 @@ namespace App\Swagger;
  *
  * @OA\Server(
  *     url=L5_SWAGGER_CONST_HOST,
- *     description="API Server"
+ *     description="Local API Server"
+ * )
+ *
+ * @OA\Server(
+ *     url="https://news.flipcodesolutions.com/api",
+ *     description="Production API Server"
  * )
  *
  * @OA\SecurityScheme(

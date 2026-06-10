@@ -47,4 +47,8 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/news/edit/{id}', [NewsController::class, 'edit'])->name('admin.news.edit');
     Route::put('/news/update', [NewsController::class, 'update'])->name('admin.news.update');
     Route::get('/news/delete/{id}', [NewsController::class, 'destroy'])->name('admin.news.destroy');
+
+    // reporter news routes
+    Route::get('/reporter-news', [NewsController::class, 'reporterIndex'])->name('admin.reporter-news.index');
+    Route::get('/reporter-news/change-status/{id}/{status}', [NewsController::class, 'changeStatus'])->name('admin.reporter-news.change-status');
 });

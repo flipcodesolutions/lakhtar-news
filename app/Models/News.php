@@ -35,7 +35,7 @@ class News extends Model
             'is_featured' => 'boolean',
             'total_views' => 'integer',
             'publish_date' => 'datetime',
-            'status' => 'boolean',
+            'status' => 'string',
         ];
     }
 

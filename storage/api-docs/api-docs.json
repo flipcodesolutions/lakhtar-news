@@ -7,11 +7,11 @@
     "servers": [
         {
             "url": "http://127.0.0.1:8000/api",
-            "description": "API Server"
+            "description": "Local API Server"
         },
         {
             "url": "https://news.flipcodesolutions.com/api",
-            "description": "Production Server"
+            "description": "Production API Server"
         }
     ],
     "paths": {
@@ -379,6 +379,112 @@
                         }
                     }
                 }
+            }
+        },
+        "/profile": {
+            "get": {
+                "tags": [
+                    "User"
+                ],
+                "summary": "Get User Profile",
+                "description": "Retrieve the authenticated user's profile information.",
+                "operationId": "getProfile",
+                "responses": {
+                    "200": {
+                        "description": "User profile retrieved successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User profile retrieved successfully."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "user": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "John Doe"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "john@example.com"
+                                                        },
+                                                        "mobile": {
+                                                            "type": "string",
+                                                            "example": "9876543210"
+                                                        },
+                                                        "language": {
+                                                            "type": "string",
+                                                            "example": "eng",
+                                                            "enum": [
+                                                                "eng",
+                                                                "hin",
+                                                                "guj"
+                                                            ]
+                                                        },
+                                                        "role": {
+                                                            "type": "string",
+                                                            "example": "user"
+                                                        },
+                                                        "status": {
+                                                            "type": "string",
+                                                            "example": "active"
+                                                        },
+                                                        "created_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2026-06-08T12:00:00.000000Z"
+                                                        },
+                                                        "updated_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2026-06-08T12:00:00.000000Z"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
             }
         },
         "/update-profile": {
@@ -1496,6 +1602,525 @@
                     }
                 ]
             }
+        },
+        "/my-news": {
+            "get": {
+                "tags": [
+                    "Reporter"
+                ],
+                "summary": "Get Reporter News",
+                "description": "Fetch all news created by the authenticated reporter. News title and description are returned according to the user's selected language.",
+                "operationId": "getReporterNews",
+                "responses": {
+                    "200": {
+                        "description": "Reporter news fetched successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Reporter news fetched successfully in English"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "news": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "title": {
+                                                                "type": "string",
+                                                                "example": "Breaking News Title"
+                                                            },
+                                                            "description": {
+                                                                "type": "string",
+                                                                "example": "This is the news description."
+                                                            },
+                                                            "slug": {
+                                                                "type": "string",
+                                                                "example": "breaking-news-title"
+                                                            },
+                                                            "image": {
+                                                                "type": "string",
+                                                                "example": "uploads/news/news.jpg"
+                                                            },
+                                                            "video": {
+                                                                "type": "string",
+                                                                "example": "uploads/news/video.mp4",
+                                                                "nullable": true
+                                                            },
+                                                            "news_type": {
+                                                                "type": "string",
+                                                                "example": "breaking"
+                                                            },
+                                                            "status": {
+                                                                "type": "string",
+                                                                "example": "published"
+                                                            },
+                                                            "created_at": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2026-06-09T08:30:00.000000Z"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Something went wrong."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/create-news": {
+            "post": {
+                "tags": [
+                    "Reporter"
+                ],
+                "summary": "Create News",
+                "description": "Create a new news article with multilingual content, image, video and video thumbnail.",
+                "operationId": "createNews",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "category_id",
+                                    "title",
+                                    "description",
+                                    "titleInHindi",
+                                    "descriptionInHindi",
+                                    "titleInGujarati",
+                                    "descriptionInGujarati",
+                                    "news_type",
+                                    "is_featured",
+                                    "publish_date"
+                                ],
+                                "properties": {
+                                    "category_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Breaking News"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "English news description"
+                                    },
+                                    "titleInHindi": {
+                                        "type": "string",
+                                        "example": "ब्रेकिंग न्यूज़"
+                                    },
+                                    "descriptionInHindi": {
+                                        "type": "string",
+                                        "example": "हिंदी समाचार विवरण"
+                                    },
+                                    "titleInGujarati": {
+                                        "type": "string",
+                                        "example": "બ્રેકિંગ ન્યૂઝ"
+                                    },
+                                    "descriptionInGujarati": {
+                                        "type": "string",
+                                        "example": "ગુજરાતી સમાચાર વર્ણન"
+                                    },
+                                    "image": {
+                                        "description": "News image",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "video": {
+                                        "description": "News video",
+                                        "type": "string",
+                                        "format": "url"
+                                    },
+                                    "news_type": {
+                                        "type": "string",
+                                        "example": "breaking",
+                                        "enum": [
+                                            "normal",
+                                            "breaking",
+                                            "trending",
+                                            "live"
+                                        ]
+                                    },
+                                    "is_featured": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "publish_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-06-09"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Reporter news created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Reporter news created successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/update-news/{id}": {
+            "put": {
+                "tags": [
+                    "Reporter"
+                ],
+                "summary": "Update News",
+                "description": "Update an existing news article.",
+                "operationId": "updateNews",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "News ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "category_id",
+                                    "title",
+                                    "description",
+                                    "titleInHindi",
+                                    "descriptionInHindi",
+                                    "titleInGujarati",
+                                    "descriptionInGujarati",
+                                    "news_type",
+                                    "is_featured",
+                                    "publish_date"
+                                ],
+                                "properties": {
+                                    "category_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Updated Breaking News"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Updated English description"
+                                    },
+                                    "titleInHindi": {
+                                        "type": "string",
+                                        "example": "अपडेटेड ब्रेकिंग न्यूज़"
+                                    },
+                                    "descriptionInHindi": {
+                                        "type": "string",
+                                        "example": "अपडेटेड हिंदी विवरण"
+                                    },
+                                    "titleInGujarati": {
+                                        "type": "string",
+                                        "example": "અપડેટેડ બ્રેકિંગ ન્યૂઝ"
+                                    },
+                                    "descriptionInGujarati": {
+                                        "type": "string",
+                                        "example": "અપડેટેડ ગુજરાતી વર્ણન"
+                                    },
+                                    "image": {
+                                        "description": "News image",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "video": {
+                                        "description": "Video URL",
+                                        "type": "string",
+                                        "example": "https://example.com/video.mp4"
+                                    },
+                                    "news_type": {
+                                        "type": "string",
+                                        "example": "breaking",
+                                        "enum": [
+                                            "normal",
+                                            "breaking",
+                                            "trending",
+                                            "live"
+                                        ]
+                                    },
+                                    "is_featured": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "publish_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-06-09"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Reporter news updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Reporter news updated successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "News not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "News not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/delete-news/{id}": {
+            "delete": {
+                "tags": [
+                    "Reporter"
+                ],
+                "summary": "Delete News",
+                "description": "Delete a news article created by the authenticated reporter.",
+                "operationId": "deleteNews",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "News ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Reporter news deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Reporter news deleted successfully"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {}
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "News not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "News not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Something went wrong."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -1528,6 +2153,10 @@
         {
             "name": "News",
             "description": "News"
+        },
+        {
+            "name": "Reporter",
+            "description": "Reporter"
         }
     ]
 }

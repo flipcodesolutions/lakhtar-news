@@ -17,7 +17,7 @@
                     <div class="form-col">
                         <div class="form-group">
                             <label for="name">Name</label>
-                            <input type="text" id="name" name="name" class="form-control" placeholder="Enter name">
+                            <input type="text" id="name" name="name" value="{{ old('name') }}" class="form-control" placeholder="Enter name">
                             @error('name')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
@@ -26,7 +26,7 @@
                     <div class="form-col">
                         <div class="form-group">
                             <label for="email">Email</label>
-                            <input type="email" id="email" name="email" class="form-control" placeholder="Enter email">
+                            <input type="email" id="email" name="email" value="{{ old('email') }}" class="form-control" placeholder="Enter email">
                             @error('email')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
@@ -35,8 +35,8 @@
                     <div class="form-col">
                         <div class="form-group">
                             <label for="mobile">Mobile</label>
-                            <input type="text" id="mobile" name="mobile" class="form-control" placeholder="Enter mobile" maxlength="10" inputmode="numeric" pattern="[0-9]{10}" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)" autocomplete="tel">
-                            @error('email')
+                            <input type="text" id="mobile" name="mobile" value="{{ old('mobile') }}" class="form-control" placeholder="Enter mobile" maxlength="10" inputmode="numeric" pattern="[0-9]{10}" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)" autocomplete="tel">
+                            @error('mobile')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div>
@@ -47,10 +47,10 @@
                             <label for="role">Role</label>
                             <select id="role" name="role" class="form-control">
                                 <option selected disabled>-- Select Role --</option>
-                                <option value="admin">Admin</option>
+                                <option @if (old('role') == 'admin') selected @endif value="admin">Admin</option>
                                 {{-- <option value="editor">Editor</option> --}}
-                                <option value="reporter">Reporter</option>
-                                <option value="user">User</option>
+                                <option @if (old('role') == 'reporter') selected @endif value="reporter">Reporter</option>
+                                <option @if (old('role') == 'user') selected @endif value="user">User</option>
                             </select>
                             @error('role')
                                 <span class="text-danger">{{ $message }}</span>
@@ -60,13 +60,13 @@
                     <div class="form-col">
                         <div class="form-group">
                             <label for="language">Language</label>
-                            <select id="language" name="language_id" class="form-control">
+                            <select id="language" name="language" class="form-control">
                                 <option selected disabled>-- Select Language --</option>
-                                <option value="eng">English</option>
-                                <option value="guj">Gujarati</option>
-                                <option value="hin">Hindi</option>
+                                <option @if (old('language') == 1) selected @endif value="eng">English</option>
+                                <option @if (old('language') == 2) selected @endif value="guj">Gujarati</option>
+                                <option @if (old('language') == 3) selected @endif value="hin">Hindi</option>
                             </select>
-                            @error('status')
+                            @error('language')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div>

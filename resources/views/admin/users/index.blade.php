@@ -32,7 +32,7 @@
                                 <td>{{ $user->name ?? '-' }}</td>
                                 <td>{{ $user->mobile ?? '-' }}</td>
                                 <td>{{ $user->email ?? '-' }}</td>
-                                <td>{{ $user->language->name ?? '-' }}</td>
+                                <td>{{ $user->language ?? '-' }}</td>
                                 <td class="text-capitalize">{{ $user->role ?? '-' }}</td>
                                 <td> <span class="badge badge-{{ $user->is_active ? 'success' : 'danger' }}">{{ $user->is_active ? 'Active' : 'Inactive' }}</span></td>
                                 <td>

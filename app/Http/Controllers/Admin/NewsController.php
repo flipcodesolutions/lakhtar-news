@@ -33,8 +33,7 @@ class NewsController extends Controller
             'titleInGujarati' => 'required|string|max:255',
             'descriptionInGujarati' => 'required|string',
             'image' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-            'video' => 'file|mimes:mp4,mov,avi|max:20480',
-            'video_thumbnail' => 'required_if:video,file|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'video' => 'nullable|string',
             'news_type' => 'required|string|in:normal,breaking,trending,live',
             'is_featured' => 'required|boolean',
             'publish_date' => 'required|date',
@@ -56,21 +55,11 @@ class NewsController extends Controller
             $file->move(public_path('news'), $fileName);
             $news->image = 'news/' . $fileName;
         }
-        if ($request->hasFile('video_thumbnail')) {
-            $file = $request->file('video_thumbnail');
-            $fileName = time() . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('news'), $fileName);
-            $news->video_thumbnail = 'news/' . $fileName;
-        }
-        if ($request->hasFile('video')) {
-            $file = $request->file('video');
-            $fileName = time() . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('news'), $fileName);
-            $news->video = 'news/' . $fileName;
-        }
+        $news->video = $request->video;
         $news->news_type = $request->news_type;
         $news->is_featured = $request->is_featured;
         $news->publish_date = $request->publish_date;
+        $news->status = 'approved';
         $news->save();
         return redirect()->route('admin.news.index')->with('success', 'News created successfully');
     }
@@ -94,8 +83,7 @@ class NewsController extends Controller
             'titleInGujarati' => 'required|string|max:255',
             'descriptionInGujarati' => 'required|string',
             'image' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-            'video' => 'file|mimes:mp4,mov,avi|max:20480',
-            'video_thumbnail' => 'required_if:video,file|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'video' => 'nullable|string',
             'news_type' => 'required|string|in:normal,breaking,trending,live',
             'is_featured' => 'required|boolean',
             'publish_date' => 'required|date',
@@ -119,21 +107,11 @@ class NewsController extends Controller
                 $file->move(public_path('news'), $fileName);
                 $news->image = 'news/' . $fileName;
             }
-            if ($request->hasFile('video_thumbnail')) {
-                $file = $request->file('video_thumbnail');
-                $fileName = time() . '.' . $file->getClientOriginalExtension();
-                $file->move(public_path('news'), $fileName);
-                $news->video_thumbnail = 'news/' . $fileName;
-            }
-            if ($request->hasFile('video')) {
-                $file = $request->file('video');
-                $fileName = time() . '.' . $file->getClientOriginalExtension();
-                $file->move(public_path('news'), $fileName);
-                $news->video = 'news/' . $fileName;
-            }
+            $news->video = $request->video;
             $news->news_type = $request->news_type;
             $news->is_featured = $request->is_featured;
             $news->publish_date = $request->publish_date;
+            $news->status = 'approved';
             $news->save();
             return redirect()->route('admin.news.index')->with('success', 'News updated successfully');
         }
@@ -146,5 +124,33 @@ class NewsController extends Controller
             $news->delete();
             return redirect()->route('admin.news.index')->with('success', 'News deleted successfully');
         }
+    }
+
+    public function reporterIndex()
+    {
+        $news = News::with(['category', 'user'])
+            ->whereHas('user', fn ($query) => $query->where('role', '!=', 'admin'))
+            ->orderByDesc('id')
+            ->get();
+
+        return view('admin.reporter-news.index', compact('news'));
+    }
+
+    public function changeStatus($id, $status)
+    {
+        if (! in_array($status, ['approved', 'rejected'], true)) {
+            return redirect()->route('admin.reporter-news.index')->with('error', 'Invalid status.');
+        }
+
+        $news = News::find($id);
+
+        if (! $news) {
+            return redirect()->route('admin.reporter-news.index')->with('error', 'News not found.');
+        }
+
+        $news->status = $status;
+        $news->save();
+
+        return redirect()->route('admin.reporter-news.index')->with('success', 'News status updated successfully.');
     }
 }

@@ -78,7 +78,7 @@ class HomeController extends Controller
     {
         $search = $request->input('search', '');
 
-        $language = Auth::user()?->language ?? 'eng';
+        $language = Auth::user()?->language ?? 'guj';
         $column = match ($language) {
             'hin' => 'nameInHindi',
             'guj' => 'nameInGujarati',
@@ -90,6 +90,7 @@ class HomeController extends Controller
             'hin' => 'श्रेणियां सफलतापूर्वक प्राप्त की गईं।',
             'guj' => 'કેટેગરી સફળતાપૂર્વક મેળવવામાં આવી છે.',
         ];
+
 
         $categories = Category::select(
             'id',
