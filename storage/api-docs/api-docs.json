@@ -1113,12 +1113,46 @@
                                                             },
                                                             "image": {
                                                                 "type": "string",
-                                                                "example": "uploads/news/news.jpg"
+                                                                "example": "news/1718100000_abcd1234.webp"
                                                             },
                                                             "video": {
                                                                 "type": "string",
-                                                                "example": null,
+                                                                "example": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
                                                                 "nullable": true
+                                                            },
+                                                            "media": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "properties": {
+                                                                        "id": {
+                                                                            "type": "integer",
+                                                                            "example": 10
+                                                                        },
+                                                                        "media_type": {
+                                                                            "type": "string",
+                                                                            "example": "image"
+                                                                        },
+                                                                        "file_path": {
+                                                                            "type": "string",
+                                                                            "example": "news/1718100000_abcd1234.webp"
+                                                                        },
+                                                                        "thumbnail": {
+                                                                            "type": "string",
+                                                                            "example": null,
+                                                                            "nullable": true
+                                                                        },
+                                                                        "caption": {
+                                                                            "type": "string",
+                                                                            "example": null,
+                                                                            "nullable": true
+                                                                        },
+                                                                        "sort_order": {
+                                                                            "type": "integer",
+                                                                            "example": 0
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                }
                                                             },
                                                             "news_type": {
                                                                 "type": "string",
@@ -1254,12 +1288,46 @@
                                                             },
                                                             "image": {
                                                                 "type": "string",
-                                                                "example": "uploads/news/news.jpg"
+                                                                "example": "news/1718100000_abcd1234.webp"
                                                             },
                                                             "video": {
                                                                 "type": "string",
-                                                                "example": null,
+                                                                "example": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
                                                                 "nullable": true
+                                                            },
+                                                            "media": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "properties": {
+                                                                        "id": {
+                                                                            "type": "integer",
+                                                                            "example": 10
+                                                                        },
+                                                                        "media_type": {
+                                                                            "type": "string",
+                                                                            "example": "image"
+                                                                        },
+                                                                        "file_path": {
+                                                                            "type": "string",
+                                                                            "example": "news/1718100000_abcd1234.webp"
+                                                                        },
+                                                                        "thumbnail": {
+                                                                            "type": "string",
+                                                                            "example": null,
+                                                                            "nullable": true
+                                                                        },
+                                                                        "caption": {
+                                                                            "type": "string",
+                                                                            "example": null,
+                                                                            "nullable": true
+                                                                        },
+                                                                        "sort_order": {
+                                                                            "type": "integer",
+                                                                            "example": 0
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                }
                                                             },
                                                             "news_type": {
                                                                 "type": "string",
@@ -1393,7 +1461,46 @@
                                                         },
                                                         "image": {
                                                             "type": "string",
-                                                            "example": "uploads/news/news.jpg"
+                                                            "example": "news/1718100000_abcd1234.webp"
+                                                        },
+                                                        "video": {
+                                                            "type": "string",
+                                                            "example": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                                                            "nullable": true
+                                                        },
+                                                        "media": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 10
+                                                                    },
+                                                                    "media_type": {
+                                                                        "type": "string",
+                                                                        "example": "image"
+                                                                    },
+                                                                    "file_path": {
+                                                                        "type": "string",
+                                                                        "example": "news/1718100000_abcd1234.webp"
+                                                                    },
+                                                                    "thumbnail": {
+                                                                        "type": "string",
+                                                                        "example": null,
+                                                                        "nullable": true
+                                                                    },
+                                                                    "caption": {
+                                                                        "type": "string",
+                                                                        "example": null,
+                                                                        "nullable": true
+                                                                    },
+                                                                    "sort_order": {
+                                                                        "type": "integer",
+                                                                        "example": 0
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
                                                         },
                                                         "news_type": {
                                                             "type": "string",
@@ -1516,11 +1623,45 @@
                                                             },
                                                             "image": {
                                                                 "type": "string",
-                                                                "example": "uploads/news/news-image.jpg"
+                                                                "example": "news/1718100000_abcd1234.webp"
                                                             },
                                                             "video": {
                                                                 "type": "string",
-                                                                "example": "uploads/news/video.mp4"
+                                                                "example": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+                                                            },
+                                                            "media": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "properties": {
+                                                                        "id": {
+                                                                            "type": "integer",
+                                                                            "example": 10
+                                                                        },
+                                                                        "media_type": {
+                                                                            "type": "string",
+                                                                            "example": "video"
+                                                                        },
+                                                                        "file_path": {
+                                                                            "type": "string",
+                                                                            "example": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+                                                                        },
+                                                                        "thumbnail": {
+                                                                            "type": "string",
+                                                                            "example": null,
+                                                                            "nullable": true
+                                                                        },
+                                                                        "caption": {
+                                                                            "type": "string",
+                                                                            "example": null,
+                                                                            "nullable": true
+                                                                        },
+                                                                        "sort_order": {
+                                                                            "type": "integer",
+                                                                            "example": 0
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                }
                                                             },
                                                             "news_type": {
                                                                 "type": "string",
@@ -1632,12 +1773,46 @@
                                                         },
                                                         "image": {
                                                             "type": "string",
-                                                            "example": "uploads/news/news.jpg"
+                                                            "example": "news/1718100000_abcd1234.webp"
                                                         },
                                                         "video": {
                                                             "type": "string",
-                                                            "example": "uploads/news/video.mp4",
+                                                            "example": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
                                                             "nullable": true
+                                                        },
+                                                        "media": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 10
+                                                                    },
+                                                                    "media_type": {
+                                                                        "type": "string",
+                                                                        "example": "image"
+                                                                    },
+                                                                    "file_path": {
+                                                                        "type": "string",
+                                                                        "example": "news/1718100000_abcd1234.webp"
+                                                                    },
+                                                                    "thumbnail": {
+                                                                        "type": "string",
+                                                                        "example": null,
+                                                                        "nullable": true
+                                                                    },
+                                                                    "caption": {
+                                                                        "type": "string",
+                                                                        "example": null,
+                                                                        "nullable": true
+                                                                    },
+                                                                    "sort_order": {
+                                                                        "type": "integer",
+                                                                        "example": 0
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
                                                         },
                                                         "news_type": {
                                                             "type": "string",
@@ -1771,12 +1946,46 @@
                                                             },
                                                             "image": {
                                                                 "type": "string",
-                                                                "example": "uploads/news/news.jpg"
+                                                                "example": "news/1718100000_abcd1234.webp"
                                                             },
                                                             "video": {
                                                                 "type": "string",
-                                                                "example": "uploads/news/video.mp4",
+                                                                "example": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
                                                                 "nullable": true
+                                                            },
+                                                            "media": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "properties": {
+                                                                        "id": {
+                                                                            "type": "integer",
+                                                                            "example": 10
+                                                                        },
+                                                                        "media_type": {
+                                                                            "type": "string",
+                                                                            "example": "image"
+                                                                        },
+                                                                        "file_path": {
+                                                                            "type": "string",
+                                                                            "example": "news/1718100000_abcd1234.webp"
+                                                                        },
+                                                                        "thumbnail": {
+                                                                            "type": "string",
+                                                                            "example": null,
+                                                                            "nullable": true
+                                                                        },
+                                                                        "caption": {
+                                                                            "type": "string",
+                                                                            "example": null,
+                                                                            "nullable": true
+                                                                        },
+                                                                        "sort_order": {
+                                                                            "type": "integer",
+                                                                            "example": 0
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                }
                                                             },
                                                             "news_type": {
                                                                 "type": "string",
@@ -1854,7 +2063,7 @@
                     "Reporter"
                 ],
                 "summary": "Create News",
-                "description": "Create a new news article with multilingual content, image, video and video thumbnail.",
+                "description": "Create a new news article with multilingual content, multiple images and YouTube video URLs.",
                 "operationId": "createNews",
                 "requestBody": {
                     "required": true,
@@ -1902,13 +2111,29 @@
                                         "type": "string",
                                         "example": "ગુજરાતી સમાચાર વર્ણન"
                                     },
+                                    "images": {
+                                        "description": "Multiple images",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
+                                    },
+                                    "video_urls": {
+                                        "description": "YouTube video URLs",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "url"
+                                        }
+                                    },
                                     "image": {
-                                        "description": "News image",
+                                        "description": "Deprecated. Use images[]",
                                         "type": "string",
                                         "format": "binary"
                                     },
                                     "video": {
-                                        "description": "News video",
+                                        "description": "Deprecated. Use video_urls[] (YouTube only)",
                                         "type": "string",
                                         "format": "url"
                                     },
@@ -1981,7 +2206,7 @@
                     "Reporter"
                 ],
                 "summary": "Update News",
-                "description": "Update an existing news article.",
+                "description": "Update an existing news article. Supports adding/removing media. Videos must be YouTube URLs.",
                 "operationId": "updateNews",
                 "parameters": [
                     {
@@ -2041,15 +2266,38 @@
                                         "type": "string",
                                         "example": "અપડેટેડ ગુજરાતી વર્ણન"
                                     },
+                                    "images": {
+                                        "description": "Add multiple images",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
+                                    },
+                                    "video_urls": {
+                                        "description": "Add YouTube video URLs",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "url"
+                                        }
+                                    },
+                                    "remove_media_ids": {
+                                        "description": "Media IDs to remove from this news",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        }
+                                    },
                                     "image": {
-                                        "description": "News image",
+                                        "description": "Deprecated. Use images[]",
                                         "type": "string",
                                         "format": "binary"
                                     },
                                     "video": {
-                                        "description": "Video URL",
+                                        "description": "Deprecated. Use video_urls[] (YouTube only)",
                                         "type": "string",
-                                        "example": "https://example.com/video.mp4"
+                                        "format": "url"
                                     },
                                     "news_type": {
                                         "type": "string",

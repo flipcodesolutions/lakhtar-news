@@ -154,8 +154,21 @@ class HomeController extends Controller
      *                         @OA\Property(property="title", type="string", example="Breaking News Title"),
      *                         @OA\Property(property="slug", type="string", example="breaking-news-title"),
      *                         @OA\Property(property="description", type="string", example="Breaking news description."),
-     *                         @OA\Property(property="image", type="string", example="uploads/news/news.jpg"),
-     *                         @OA\Property(property="video", type="string", nullable=true, example=null),
+     *                         @OA\Property(property="image", type="string", example="news/1718100000_abcd1234.webp"),
+     *                         @OA\Property(property="video", type="string", nullable=true, example="https://www.youtube.com/watch?v=dQw4w9WgXcQ"),
+     *                         @OA\Property(
+     *                             property="media",
+     *                             type="array",
+     *                             @OA\Items(
+     *                                 type="object",
+     *                                 @OA\Property(property="id", type="integer", example=10),
+     *                                 @OA\Property(property="media_type", type="string", example="image"),
+     *                                 @OA\Property(property="file_path", type="string", example="news/1718100000_abcd1234.webp"),
+     *                                 @OA\Property(property="thumbnail", type="string", nullable=true, example=null),
+     *                                 @OA\Property(property="caption", type="string", nullable=true, example=null),
+     *                                 @OA\Property(property="sort_order", type="integer", example=0)
+     *                             )
+     *                         ),
      *                         @OA\Property(property="news_type", type="string", example="breaking"),
      *                         @OA\Property(property="is_featured", type="integer", example=1),
      *                         @OA\Property(property="total_views", type="integer", example=250),
@@ -211,27 +224,41 @@ class HomeController extends Controller
             'guj' => 'બ્રેકિંગ ન્યૂઝ સફળતાપૂર્વક મેળવવામાં આવી.',
         ];
 
-        $news = News::where('news_type', 'breaking')
-            ->select(
-                'id',
-                'category_id',
-                'user_id',
-                "$titleColumn as title",
-                'slug',
-                "$descriptionColumn as description",
-                'image',
-                'video',
-                'news_type',
-                'is_featured',
-                'total_views',
-                'publish_date',
-                'status',
-                'created_at',
-                'updated_at'
-            )
-            ->with(['category', 'user'])
+        $news = News::with(['category', 'user', 'media'])
+            ->where('news_type', 'breaking')
             ->latest()
-            ->get();
+            ->get()
+            ->map(function ($item) use ($titleColumn, $descriptionColumn) {
+                return [
+                    'id' => $item->id,
+                    'category_id' => $item->category_id,
+                    'user_id' => $item->user_id,
+                    'title' => $item->$titleColumn,
+                    'slug' => $item->slug,
+                    'description' => $item->$descriptionColumn,
+                    'image' => $item->image,
+                    'video' => $item->video,
+                    'media' => $item->media->map(function ($mediaItem) {
+                        return [
+                            'id' => $mediaItem->id,
+                            'media_type' => $mediaItem->media_type,
+                            'file_path' => $mediaItem->file_path,
+                            'thumbnail' => $mediaItem->thumbnail,
+                            'caption' => $mediaItem->caption,
+                            'sort_order' => $mediaItem->pivot?->sort_order,
+                        ];
+                    })->values(),
+                    'news_type' => $item->news_type,
+                    'is_featured' => $item->is_featured,
+                    'total_views' => $item->total_views,
+                    'publish_date' => $item->publish_date,
+                    'status' => $item->status,
+                    'created_at' => $item->created_at,
+                    'updated_at' => $item->updated_at,
+                    'category' => $item->category,
+                    'user' => $item->user,
+                ];
+            });
 
         return Util::getSuccessMessage(
             $messages[$language] ?? $messages['eng'],
@@ -280,8 +307,21 @@ class HomeController extends Controller
      *                         @OA\Property(property="title", type="string", example="Breaking News Title"),
      *                         @OA\Property(property="slug", type="string", example="breaking-news-title"),
      *                         @OA\Property(property="description", type="string", example="Breaking news description."),
-     *                         @OA\Property(property="image", type="string", example="uploads/news/news.jpg"),
-     *                         @OA\Property(property="video", type="string", nullable=true, example=null),
+     *                         @OA\Property(property="image", type="string", example="news/1718100000_abcd1234.webp"),
+     *                         @OA\Property(property="video", type="string", nullable=true, example="https://www.youtube.com/watch?v=dQw4w9WgXcQ"),
+     *                         @OA\Property(
+     *                             property="media",
+     *                             type="array",
+     *                             @OA\Items(
+     *                                 type="object",
+     *                                 @OA\Property(property="id", type="integer", example=10),
+     *                                 @OA\Property(property="media_type", type="string", example="image"),
+     *                                 @OA\Property(property="file_path", type="string", example="news/1718100000_abcd1234.webp"),
+     *                                 @OA\Property(property="thumbnail", type="string", nullable=true, example=null),
+     *                                 @OA\Property(property="caption", type="string", nullable=true, example=null),
+     *                                 @OA\Property(property="sort_order", type="integer", example=0)
+     *                             )
+     *                         ),
      *                         @OA\Property(property="news_type", type="string", example="breaking"),
      *                         @OA\Property(property="is_featured", type="integer", example=1),
      *                         @OA\Property(property="total_views", type="integer", example=250),
@@ -337,27 +377,41 @@ class HomeController extends Controller
             'guj' => 'ટ્રેન્ડિંગ ન્યૂઝ સફળતાપૂર્વક મેળવવામાં આવી.',
         ];
 
-        $news = News::where('total_views', '>', 100)
-            ->select(
-                'id',
-                'category_id',
-                'user_id',
-                "$titleColumn as title",
-                'slug',
-                "$descriptionColumn as description",
-                'image',
-                'video',
-                'news_type',
-                'is_featured',
-                'total_views',
-                'publish_date',
-                'status',
-                'created_at',
-                'updated_at'
-            )
-            ->with(['category', 'user'])
+        $news = News::with(['category', 'user', 'media'])
+            ->where('total_views', '>', 100)
             ->latest()
-            ->get();
+            ->get()
+            ->map(function ($item) use ($titleColumn, $descriptionColumn) {
+                return [
+                    'id' => $item->id,
+                    'category_id' => $item->category_id,
+                    'user_id' => $item->user_id,
+                    'title' => $item->$titleColumn,
+                    'slug' => $item->slug,
+                    'description' => $item->$descriptionColumn,
+                    'image' => $item->image,
+                    'video' => $item->video,
+                    'media' => $item->media->map(function ($mediaItem) {
+                        return [
+                            'id' => $mediaItem->id,
+                            'media_type' => $mediaItem->media_type,
+                            'file_path' => $mediaItem->file_path,
+                            'thumbnail' => $mediaItem->thumbnail,
+                            'caption' => $mediaItem->caption,
+                            'sort_order' => $mediaItem->pivot?->sort_order,
+                        ];
+                    })->values(),
+                    'news_type' => $item->news_type,
+                    'is_featured' => $item->is_featured,
+                    'total_views' => $item->total_views,
+                    'publish_date' => $item->publish_date,
+                    'status' => $item->status,
+                    'created_at' => $item->created_at,
+                    'updated_at' => $item->updated_at,
+                    'category' => $item->category,
+                    'user' => $item->user,
+                ];
+            });
 
         return Util::getSuccessMessage(
             $messages[$language] ?? $messages['eng'],
@@ -411,7 +465,21 @@ class HomeController extends Controller
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="title", type="string", example="Breaking News Title"),
      *                     @OA\Property(property="description", type="string", example="This is the news description."),
-     *                     @OA\Property(property="image", type="string", example="uploads/news/news.jpg"),
+     *                     @OA\Property(property="image", type="string", example="news/1718100000_abcd1234.webp"),
+     *                     @OA\Property(property="video", type="string", nullable=true, example="https://www.youtube.com/watch?v=dQw4w9WgXcQ"),
+     *                     @OA\Property(
+     *                         property="media",
+     *                         type="array",
+     *                         @OA\Items(
+     *                             type="object",
+     *                             @OA\Property(property="id", type="integer", example=10),
+     *                             @OA\Property(property="media_type", type="string", example="image"),
+     *                             @OA\Property(property="file_path", type="string", example="news/1718100000_abcd1234.webp"),
+     *                             @OA\Property(property="thumbnail", type="string", nullable=true, example=null),
+     *                             @OA\Property(property="caption", type="string", nullable=true, example=null),
+     *                             @OA\Property(property="sort_order", type="integer", example=0)
+     *                         )
+     *                     ),
      *                     @OA\Property(property="news_type", type="string", example="breaking"),
      *                     @OA\Property(
      *                         property="created_at",
@@ -484,12 +552,24 @@ class HomeController extends Controller
 
         $news = News::with([
             'category:id,' . $categoryColumn,
-            'user:id,name'
+            'user:id,name',
+            'media',
         ])->find($id);
 
         if (!$news) {
             return Util::getErrorMessage('News not found.');
         }
+
+        $media = $news->media->map(function ($mediaItem) {
+            return [
+                'id' => $mediaItem->id,
+                'media_type' => $mediaItem->media_type,
+                'file_path' => $mediaItem->file_path,
+                'thumbnail' => $mediaItem->thumbnail,
+                'caption' => $mediaItem->caption,
+                'sort_order' => $mediaItem->pivot?->sort_order,
+            ];
+        })->values();
 
         $response = [
             'id' => $news->id,
@@ -498,6 +578,7 @@ class HomeController extends Controller
             'description' => $news->$descriptionColumn,
             'image' => $news->image,
             'video' => $news->video,
+            'media' => $media,
             'news_type' => $news->news_type,
             'is_featured' => $news->is_featured,
             'total_views' => $news->total_views,
@@ -565,15 +646,20 @@ class HomeController extends Controller
      *                             type="string",
      *                             example="This is the video news description."
      *                         ),
+     *                         @OA\Property(property="image", type="string", example="news/1718100000_abcd1234.webp"),
+     *                         @OA\Property(property="video", type="string", example="https://www.youtube.com/watch?v=dQw4w9WgXcQ"),
      *                         @OA\Property(
-     *                             property="image",
-     *                             type="string",
-     *                             example="uploads/news/news-image.jpg"
-     *                         ),
-     *                         @OA\Property(
-     *                             property="video",
-     *                             type="string",
-     *                             example="uploads/news/video.mp4"
+     *                             property="media",
+     *                             type="array",
+     *                             @OA\Items(
+     *                                 type="object",
+     *                                 @OA\Property(property="id", type="integer", example=10),
+     *                                 @OA\Property(property="media_type", type="string", example="video"),
+     *                                 @OA\Property(property="file_path", type="string", example="https://www.youtube.com/watch?v=dQw4w9WgXcQ"),
+     *                                 @OA\Property(property="thumbnail", type="string", nullable=true, example=null),
+     *                                 @OA\Property(property="caption", type="string", nullable=true, example=null),
+     *                                 @OA\Property(property="sort_order", type="integer", example=0)
+     *                             )
      *                         ),
      *                         @OA\Property(
      *                             property="news_type",
@@ -639,8 +725,8 @@ class HomeController extends Controller
                 default => 'Video news fetched successfully.',
             };
 
-            $news = News::whereNotNull('video')
-                ->where('video', '!=', '')
+            $news = News::with('media')
+                ->whereHas('media', fn($query) => $query->where('media_type', 'video'))
                 ->orderBy('id', 'desc')
                 ->get()
                 ->map(function ($item) use ($titleColumn, $descriptionColumn) {
@@ -651,6 +737,16 @@ class HomeController extends Controller
                         'description' => $item->$descriptionColumn,
                         'image' => $item->image,
                         'video' => $item->video,
+                        'media' => $item->media->map(function ($mediaItem) {
+                            return [
+                                'id' => $mediaItem->id,
+                                'media_type' => $mediaItem->media_type,
+                                'file_path' => $mediaItem->file_path,
+                                'thumbnail' => $mediaItem->thumbnail,
+                                'caption' => $mediaItem->caption,
+                                'sort_order' => $mediaItem->pivot?->sort_order,
+                            ];
+                        })->values(),
                         'total_views' => $item->total_views,
                         'publish_date' => $item->publish_date,
                         'news_type' => $item->news_type,
@@ -726,16 +822,25 @@ class HomeController extends Controller
      *                         type="string",
      *                         example="breaking-news-in-gujarat"
      *                     ),
-     *                     @OA\Property(
-     *                         property="image",
-     *                         type="string",
-     *                         example="uploads/news/news.jpg"
-     *                     ),
+     *                     @OA\Property(property="image", type="string", example="news/1718100000_abcd1234.webp"),
      *                     @OA\Property(
      *                         property="video",
      *                         type="string",
      *                         nullable=true,
-     *                         example="uploads/news/video.mp4"
+     *                         example="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+     *                     ),
+     *                     @OA\Property(
+     *                         property="media",
+     *                         type="array",
+     *                         @OA\Items(
+     *                             type="object",
+     *                             @OA\Property(property="id", type="integer", example=10),
+     *                             @OA\Property(property="media_type", type="string", example="image"),
+     *                             @OA\Property(property="file_path", type="string", example="news/1718100000_abcd1234.webp"),
+     *                             @OA\Property(property="thumbnail", type="string", nullable=true, example=null),
+     *                             @OA\Property(property="caption", type="string", nullable=true, example=null),
+     *                             @OA\Property(property="sort_order", type="integer", example=0)
+     *                         )
      *                     ),
      *                     @OA\Property(
      *                         property="news_type",
@@ -839,7 +944,7 @@ class HomeController extends Controller
                 default => 'News details fetched successfully.',
             };
 
-            $news = News::with('category')
+            $news = News::with(['category', 'media'])
                 ->where('slug', $slug)
                 ->first();
 
@@ -856,6 +961,16 @@ class HomeController extends Controller
                 'slug' => $news->slug,
                 'image' => $news->image,
                 'video' => $news->video,
+                'media' => $news->media->map(function ($mediaItem) {
+                    return [
+                        'id' => $mediaItem->id,
+                        'media_type' => $mediaItem->media_type,
+                        'file_path' => $mediaItem->file_path,
+                        'thumbnail' => $mediaItem->thumbnail,
+                        'caption' => $mediaItem->caption,
+                        'sort_order' => $mediaItem->pivot?->sort_order,
+                    ];
+                })->values(),
                 'news_type' => $news->news_type,
                 'created_at' => $news->created_at,
 
@@ -911,11 +1026,9 @@ class HomeController extends Controller
                 default => 'Category news fetched successfully.',
             };
 
-            $category = Category::with('news', function ($query) use ($newsColumn, $newsDescriptionColumn) {
-                $query->select($newsColumn, 'id', 'slug', 'image', 'video', $newsDescriptionColumn, 'publish_date', 'news_type', 'created_at');
-            })
-                ->where('id', $id)
-                ->first();
+            $category = Category::with(['news' => function ($query) {
+                $query->with('media')->orderByDesc('id');
+            }])->where('id', $id)->first();
 
             if (!$category) {
                 return Util::getErrorMessage(
@@ -923,11 +1036,35 @@ class HomeController extends Controller
                 );
             }
 
+            $newsList = $category->news->map(function ($newsItem) use ($newsColumn, $newsDescriptionColumn) {
+                return [
+                    'id' => $newsItem->id,
+                    'slug' => $newsItem->slug,
+                    'title' => $newsItem->$newsColumn,
+                    'description' => $newsItem->$newsDescriptionColumn,
+                    'image' => $newsItem->image,
+                    'video' => $newsItem->video,
+                    'media' => $newsItem->media->map(function ($mediaItem) {
+                        return [
+                            'id' => $mediaItem->id,
+                            'media_type' => $mediaItem->media_type,
+                            'file_path' => $mediaItem->file_path,
+                            'thumbnail' => $mediaItem->thumbnail,
+                            'caption' => $mediaItem->caption,
+                            'sort_order' => $mediaItem->pivot?->sort_order,
+                        ];
+                    })->values(),
+                    'publish_date' => $newsItem->publish_date,
+                    'news_type' => $newsItem->news_type,
+                    'created_at' => $newsItem->created_at,
+                ];
+            })->values();
+
             $response = [
                 'id' => $category->id,
                 'name' => $category->$categoryColumn,
                 'description' => $category->$categoryDescriptionColumn,
-                'news' => $category->news,
+                'news' => $newsList,
             ];
 
             return Util::getSuccessMessage(

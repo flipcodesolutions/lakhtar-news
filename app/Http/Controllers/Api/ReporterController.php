@@ -3,11 +3,15 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Media;
 use App\Models\News;
 use App\Utils\Util;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class ReporterController extends Controller
 {
@@ -62,13 +66,26 @@ class ReporterController extends Controller
      *                         @OA\Property(
      *                             property="image",
      *                             type="string",
-     *                             example="uploads/news/news.jpg"
+     *                             example="news/1718100000_abcd1234.webp"
      *                         ),
      *                         @OA\Property(
      *                             property="video",
      *                             type="string",
      *                             nullable=true,
-     *                             example="uploads/news/video.mp4"
+     *                             example="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+     *                         ),
+     *                         @OA\Property(
+     *                             property="media",
+     *                             type="array",
+     *                             @OA\Items(
+     *                                 type="object",
+     *                                 @OA\Property(property="id", type="integer", example=10),
+     *                                 @OA\Property(property="media_type", type="string", example="image"),
+     *                                 @OA\Property(property="file_path", type="string", example="news/1718100000_abcd1234.webp"),
+     *                                 @OA\Property(property="thumbnail", type="string", nullable=true, example=null),
+     *                                 @OA\Property(property="caption", type="string", nullable=true, example=null),
+     *                                 @OA\Property(property="sort_order", type="integer", example=0)
+     *                             )
      *                         ),
      *                         @OA\Property(
      *                             property="news_type",
@@ -147,10 +164,22 @@ class ReporterController extends Controller
                 default => 'Reporter news fetched successfully',
             };
 
-            $news = News::where('user_id', Auth::id())
+            $news = News::with('media')
+                ->where('user_id', Auth::id())
                 ->orderBy('id', 'desc')
                 ->get()
                 ->map(function ($item) use ($titleColumn, $descriptionColumn) {
+                    $media = $item->media->map(function ($mediaItem) {
+                        return [
+                            'id' => $mediaItem->id,
+                            'media_type' => $mediaItem->media_type,
+                            'file_path' => $mediaItem->file_path,
+                            'thumbnail' => $mediaItem->thumbnail,
+                            'caption' => $mediaItem->caption,
+                            'sort_order' => $mediaItem->pivot?->sort_order,
+                        ];
+                    })->values();
+
                     return [
                         'id' => $item->id,
                         'title' => $item->$titleColumn,
@@ -158,6 +187,7 @@ class ReporterController extends Controller
                         'slug' => $item->slug,
                         'image' => $item->image,
                         'video' => $item->video,
+                        'media' => $media,
                         'news_type' => $item->news_type,
                         'status' => $item->status,
                         'created_at' => $item->created_at,
@@ -180,7 +210,7 @@ class ReporterController extends Controller
      *     path="/create-news",
      *     tags={"Reporter"},
      *     summary="Create News",
-     *     description="Create a new news article with multilingual content, image, video and video thumbnail.",
+     *     description="Create a new news article with multilingual content, multiple images and YouTube video URLs.",
      *     operationId="createNews",
      *     security={{"sanctum":{}}},
      *
@@ -238,16 +268,28 @@ class ReporterController extends Controller
      *                     example="ગુજરાતી સમાચાર વર્ણન"
      *                 ),
      *                 @OA\Property(
+     *                     property="images",
+     *                     type="array",
+     *                     @OA\Items(type="string", format="binary"),
+     *                     description="Multiple images"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="video_urls",
+     *                     type="array",
+     *                     @OA\Items(type="string", format="url"),
+     *                     description="YouTube video URLs"
+     *                 ),
+     *                 @OA\Property(
      *                     property="image",
      *                     type="string",
      *                     format="binary",
-     *                     description="News image"
+     *                     description="Deprecated. Use images[]"
      *                 ),
      *                 @OA\Property(
      *                     property="video",
      *                     type="string",
      *                     format="url",
-     *                     description="News video"
+     *                     description="Deprecated. Use video_urls[] (YouTube only)"
      *                 ),
      *                 @OA\Property(
      *                     property="news_type",
@@ -313,42 +355,30 @@ class ReporterController extends Controller
             default => 'Reporter news created successfully',
         };
         try {
-            $request->validate([
-                'category_id' => 'required|integer|exists:categories,id',
-                'title' => 'required|string|max:255',
-                'description' => 'required|string',
-                'titleInHindi' => 'required|string|max:255',
-                'descriptionInHindi' => 'required|string',
-                'titleInGujarati' => 'required|string|max:255',
-                'descriptionInGujarati' => 'required|string',
-                'image' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-                'video' => 'string',
-                'news_type' => 'required|string|in:normal,breaking,trending,live',
-                'is_featured' => 'required|boolean',
-                'publish_date' => 'required|date',
-            ]);
+            $this->validateNewsRequest($request);
 
-            $news = new News();
-            $news->category_id = $request->category_id;
-            $news->title = $request->title;
-            $news->slug = Str::slug($request->title);
-            $news->user_id = Auth::user()->id;
-            $news->description = $request->description;
-            $news->titleInHindi = $request->titleInHindi;
-            $news->descriptionInHindi = $request->descriptionInHindi;
-            $news->titleInGujarati = $request->titleInGujarati;
-            $news->descriptionInGujarati = $request->descriptionInGujarati;
-            $news->video = $request->video;
-            if ($request->hasFile('image')) {
-                $file = $request->file('image');
-                $fileName = time() . '.' . $file->getClientOriginalExtension();
-                $file->move(public_path('news'), $fileName);
-                $news->image = 'news/' . $fileName;
-            }
-            $news->news_type = $request->news_type;
-            $news->is_featured = $request->is_featured;
-            $news->publish_date = $request->publish_date;
-            $news->save();
+            $newsId = null;
+
+            DB::transaction(function () use ($request, &$newsId) {
+                $news = new News();
+                $news->category_id = $request->category_id;
+                $news->title = $request->title;
+                $news->slug = Str::slug($request->title);
+                $news->user_id = Auth::id();
+                $news->description = $request->description;
+                $news->titleInHindi = $request->titleInHindi;
+                $news->descriptionInHindi = $request->descriptionInHindi;
+                $news->titleInGujarati = $request->titleInGujarati;
+                $news->descriptionInGujarati = $request->descriptionInGujarati;
+                $news->news_type = $request->news_type;
+                $news->is_featured = $request->boolean('is_featured');
+                $news->publish_date = $request->publish_date;
+                $news->save();
+
+                $this->attachMediaToNews($news, $request);
+                $newsId = $news->id;
+            });
+
             return Util::getSuccessMessage($message);
         } catch (\Exception $e) {
             return Util::getErrorMessage($e->getMessage());
@@ -360,7 +390,7 @@ class ReporterController extends Controller
      *     path="/update-news/{id}",
      *     tags={"Reporter"},
      *     summary="Update News",
-     *     description="Update an existing news article.",
+     *     description="Update an existing news article. Supports adding/removing media. Videos must be YouTube URLs.",
      *     operationId="updateNews",
      *     security={{"sanctum":{}}},
      *
@@ -429,16 +459,34 @@ class ReporterController extends Controller
      *                     example="અપડેટેડ ગુજરાતી વર્ણન"
      *                 ),
      *                 @OA\Property(
+     *                     property="images",
+     *                     type="array",
+     *                     @OA\Items(type="string", format="binary"),
+     *                     description="Add multiple images"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="video_urls",
+     *                     type="array",
+     *                     @OA\Items(type="string", format="url"),
+     *                     description="Add YouTube video URLs"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="remove_media_ids",
+     *                     type="array",
+     *                     @OA\Items(type="integer"),
+     *                     description="Media IDs to remove from this news"
+     *                 ),
+     *                 @OA\Property(
      *                     property="image",
      *                     type="string",
      *                     format="binary",
-     *                     description="News image"
+     *                     description="Deprecated. Use images[]"
      *                 ),
      *                 @OA\Property(
      *                     property="video",
      *                     type="string",
-     *                     example="https://example.com/video.mp4",
-     *                     description="Video URL"
+     *                     format="url",
+     *                     description="Deprecated. Use video_urls[] (YouTube only)"
      *                 ),
      *                 @OA\Property(
      *                     property="news_type",
@@ -515,8 +563,8 @@ class ReporterController extends Controller
     public function updateNews(Request $request, $id)
     {
 
-        $news = News::find($id);
-        if (!$news) {
+        $news = News::with('media')->where('id', $id)->where('user_id', Auth::id())->first();
+        if (! $news) {
             return Util::getErrorMessage('News not found');
         }
         $language = Auth::user()?->language ?? 'eng';
@@ -527,45 +575,28 @@ class ReporterController extends Controller
         };
         try {
 
-            $request->validate([
-                'category_id' => 'required|integer|exists:categories,id',
-                'title' => 'required|string|max:255',
-                'description' => 'required|string',
-                'titleInHindi' => 'required|string|max:255',
-                'descriptionInHindi' => 'required|string',
-                'titleInGujarati' => 'required|string|max:255',
-                'descriptionInGujarati' => 'required|string',
-                'image' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-                'video' => 'string',
-                'news_type' => 'required|string|in:normal,breaking,trending,live',
-                'is_featured' => 'required|boolean',
-                'publish_date' => 'required|date',
-            ]);
+            $this->validateNewsRequest($request, $news);
 
-            $news = News::find($id);
-            if (!$news) {
-                return Util::getErrorMessage('News not found');
-            }
-            $news->category_id = $request->category_id;
-            $news->title = $request->title;
-            $news->slug = Str::slug($request->title);
-            $news->user_id = Auth::user()->id;
-            $news->description = $request->description;
-            $news->titleInHindi = $request->titleInHindi;
-            $news->descriptionInHindi = $request->descriptionInHindi;
-            $news->titleInGujarati = $request->titleInGujarati;
-            $news->descriptionInGujarati = $request->descriptionInGujarati;
-            $news->video = $request->video;
-            if ($request->hasFile('image')) {
-                $file = $request->file('image');
-                $fileName = time() . '.' . $file->getClientOriginalExtension();
-                $file->move(public_path('news'), $fileName);
-                $news->image = 'news/' . $fileName;
-            }
-            $news->news_type = $request->news_type;
-            $news->is_featured = $request->is_featured;
-            $news->publish_date = $request->publish_date;
-            $news->save();
+            DB::transaction(function () use ($request, $news) {
+                $news->category_id = $request->category_id;
+                $news->title = $request->title;
+                $news->slug = Str::slug($request->title);
+                $news->user_id = Auth::id();
+                $news->description = $request->description;
+                $news->titleInHindi = $request->titleInHindi;
+                $news->descriptionInHindi = $request->descriptionInHindi;
+                $news->titleInGujarati = $request->titleInGujarati;
+                $news->descriptionInGujarati = $request->descriptionInGujarati;
+                $news->news_type = $request->news_type;
+                $news->is_featured = $request->boolean('is_featured');
+                $news->publish_date = $request->publish_date;
+                $news->save();
+
+                $this->removeSelectedMedia($news, $request->input('remove_media_ids', []));
+                $nextSortOrder = (int) ($news->media()->max('news_media.sort_order') ?? -1) + 1;
+                $this->attachMediaToNews($news, $request, $nextSortOrder);
+            });
+
             return Util::getSuccessMessage($message);
         } catch (\Exception $e) {
             return Util::getErrorMessage($e->getMessage());
@@ -675,11 +706,168 @@ class ReporterController extends Controller
             default => 'Reporter news deleted successfully',
         };
 
-        $news = News::where('id', $id)->where('user_id', $userId)->first();
+        $news = News::with('media')->where('id', $id)->where('user_id', $userId)->first();
         if (!$news) {
             return Util::getErrorMessage('News not found');
         }
+        $this->removeSelectedMedia($news, $news->media->pluck('id')->all());
         $news->delete();
         return Util::getSuccessMessage($message);
+    }
+
+    private function validateNewsRequest(Request $request, ?News $news = null): void
+    {
+        $request->validate([
+            'category_id' => 'required|integer|exists:categories,id',
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'titleInHindi' => 'required|string|max:255',
+            'descriptionInHindi' => 'required|string',
+            'titleInGujarati' => 'required|string|max:255',
+            'descriptionInGujarati' => 'required|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'images' => 'nullable|array',
+            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'video' => 'nullable|url',
+            'video_urls' => 'nullable|array',
+            'video_urls.*' => [
+                'nullable',
+                'url',
+                function ($attribute, $value, $fail) {
+                    if (blank(trim((string) $value))) {
+                        return;
+                    }
+
+                    if (! $this->isYoutubeUrl((string) $value)) {
+                        $fail('Only YouTube video URLs are allowed.');
+                    }
+                },
+            ],
+            'remove_media_ids' => 'nullable|array',
+            'remove_media_ids.*' => 'integer',
+            'news_type' => 'required|string|in:normal,breaking,trending,live',
+            'is_featured' => 'required|boolean',
+            'publish_date' => 'required|date',
+        ]);
+
+        $newImages = collect($request->file('images', []))->filter();
+        $singleImage = $request->file('image');
+        if ($singleImage) {
+            $newImages->push($singleImage);
+        }
+        $newImageCount = $newImages->count();
+
+        $videoUrls = collect($request->input('video_urls', []))->filter(fn($value) => filled(trim((string) $value)));
+        $singleVideo = trim((string) $request->input('video', ''));
+        if ($singleVideo !== '') {
+            $videoUrls->push($singleVideo);
+        }
+        $newVideoCount = $videoUrls->count();
+
+        $existingMediaCount = $news?->media->count() ?? 0;
+        $removableIds = collect($request->input('remove_media_ids', []))
+            ->map(fn($id) => (int) $id)
+            ->intersect($news?->media->pluck('id') ?? collect())
+            ->count();
+
+        if (($existingMediaCount - $removableIds + $newImageCount + $newVideoCount) <= 0) {
+            throw ValidationException::withMessages([
+                'images' => 'Add at least one image or YouTube video for this news.',
+            ]);
+        }
+    }
+
+    private function attachMediaToNews(News $news, Request $request, int $sortOrder = 0): void
+    {
+        $images = collect($request->file('images', []))->filter();
+        $singleImage = $request->file('image');
+        if ($singleImage) {
+            $images->push($singleImage);
+        }
+
+        foreach ($images as $image) {
+            $fileName = time() . '_' . Str::random(10) . '.' . $image->getClientOriginalExtension();
+            $image->move(public_path('news'), $fileName);
+
+            $media = Media::create([
+                'media_type' => 'image',
+                'file_path' => 'news/' . $fileName,
+                'uploaded_by' => Auth::id(),
+            ]);
+
+            $news->media()->attach($media->id, ['sort_order' => $sortOrder++]);
+        }
+
+        $videoUrls = collect($request->input('video_urls', []))->filter(fn($value) => filled(trim((string) $value)));
+        $singleVideo = trim((string) $request->input('video', ''));
+        if ($singleVideo !== '') {
+            $videoUrls->push($singleVideo);
+        }
+
+        foreach ($videoUrls as $videoUrl) {
+            $videoUrl = trim((string) $videoUrl);
+
+            if ($videoUrl === '') {
+                continue;
+            }
+
+            if (! $this->isYoutubeUrl($videoUrl)) {
+                throw ValidationException::withMessages([
+                    'video_urls' => 'Only YouTube video URLs are allowed.',
+                ]);
+            }
+
+            $media = Media::create([
+                'media_type' => 'video',
+                'file_path' => $videoUrl,
+                'uploaded_by' => Auth::id(),
+            ]);
+
+            $news->media()->attach($media->id, ['sort_order' => $sortOrder++]);
+        }
+    }
+
+    private function removeSelectedMedia(News $news, array $mediaIds): void
+    {
+        $mediaIds = collect($mediaIds)
+            ->map(fn($id) => (int) $id)
+            ->filter()
+            ->values()
+            ->all();
+
+        if ($mediaIds === []) {
+            return;
+        }
+
+        $mediaItems = $news->media()
+            ->whereIn('media.id', $mediaIds)
+            ->get(['media.id', 'media.media_type', 'media.file_path']);
+
+        $news->media()->detach($mediaItems->pluck('id')->all());
+
+        foreach ($mediaItems as $media) {
+            if ($media->media_type === 'image' && $media->file_path) {
+                $absolutePath = public_path($media->file_path);
+
+                if (File::exists($absolutePath)) {
+                    File::delete($absolutePath);
+                }
+            }
+
+            $media->delete();
+        }
+    }
+
+    private function isYoutubeUrl(string $url): bool
+    {
+        $host = strtolower((string) parse_url($url, PHP_URL_HOST));
+
+        return in_array($host, [
+            'youtube.com',
+            'www.youtube.com',
+            'm.youtube.com',
+            'youtu.be',
+            'www.youtu.be',
+        ], true);
     }
 }

@@ -392,6 +392,86 @@
             font-weight: normal;
         }
 
+        .selected-media-grid,
+        .existing-media-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .selected-media-card,
+        .existing-media-card {
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            overflow: hidden;
+            background: #ffffff;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .selected-media-card img,
+        .existing-media-card img {
+            width: 100%;
+            height: 110px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .selected-media-card span,
+        .existing-media-card span {
+            display: block;
+            padding: 8px;
+            font-size: 12px;
+            color: var(--text-muted);
+            word-break: break-word;
+        }
+
+        .video-url-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .video-url-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .video-url-row .form-control {
+            flex: 1;
+        }
+
+        .btn-inline {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: #ffffff;
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-inline:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .btn-inline-danger {
+            border-color: #fecaca;
+            color: #b91c1c;
+            background: #fff5f5;
+        }
+
+        .btn-inline-danger:hover {
+            border-color: #ef4444;
+            color: #991b1b;
+        }
+
         /* Responsive */
         @media (max-width: 992px) {
             .news-grid {
@@ -413,6 +493,13 @@
                 <i class="fas fa-arrow-left"></i> Back to List
             </a>
         </div>
+
+        @php
+            $oldVideoUrls = old('video_urls', ['']);
+            if (!is_array($oldVideoUrls) || $oldVideoUrls === []) {
+                $oldVideoUrls = [''];
+            }
+        @endphp
 
         <form action="{{ route('admin.news.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
@@ -560,40 +647,47 @@
                             <i class="fas fa-image"></i> News Media
                         </h3>
 
-                        <!-- Image File Upload -->
                         <div class="form-group">
-                            <label>Featured Image <span class="required-asterisk">*</span></label>
-                            <div class="upload-zone" id="image-upload-zone">
-                                <input type="file" accept="image/*" name="image" id="image" class="file-input">
-                                <div class="upload-placeholder">
+                            <label>News Images <span class="required-asterisk">*</span></label>
+                            <div class="upload-zone" id="images-upload-zone">
+                                <input type="file" accept="image/*" name="images[]" id="images" class="file-input" multiple>
+                                <div class="upload-placeholder" id="images-placeholder">
                                     <i class="fas fa-cloud-upload-alt"></i>
-                                    <span class="upload-text">Choose image or drag here</span>
-                                    <span class="upload-hint">JPG, PNG, WEBP (Max 2MB)</span>
-                                </div>
-                                <div class="upload-preview" id="image-preview-container">
-                                    <img id="imagePreview" src="" alt="Image Preview">
-                                    <button type="button" class="remove-preview-btn" data-input-id="image" title="Remove image">
-                                        <i class="fas fa-times"></i>
-                                    </button>
+                                    <span class="upload-text">Choose one or more images</span>
+                                    <span class="upload-hint">JPG, PNG, WEBP, GIF (Max 2MB each)</span>
                                 </div>
                             </div>
-                            @error('image')
+                            <div id="image-preview-list" class="selected-media-grid"></div>
+                            @error('images')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
+                            @error('images.*')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div>
 
-                        <!-- Video File Upload -->
                         <div class="form-group">
-                            <label>News Video <span class="">(Optional)</span></label>
-                            <div class="form-group" id="video-upload-zone">
-                                <input type="text" name="video" id="video" placeholder="Enter video URL" class="form-control">
+                            <label>YouTube Video URLs <span class="upload-optional">(Optional)</span></label>
+                            <div id="video-url-list" class="video-url-list">
+                                @foreach ($oldVideoUrls as $videoUrl)
+                                    <div class="video-url-row">
+                                        <input type="url" name="video_urls[]" value="{{ $videoUrl }}" class="form-control" placeholder="https://www.youtube.com/watch?v=...">
+                                        <button type="button" class="btn-inline btn-inline-danger video-url-remove">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                @endforeach
                             </div>
-                            @error('video')
+                            <button type="button" class="btn-inline" style="margin-top: 10px;" id="add-video-url">
+                                <i class="fas fa-plus"></i> Add YouTube URL
+                            </button>
+                            @error('video_urls')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
+                            @error('video_urls.*')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div>
-
-
                     </div>
 
                     <!-- Actions -->
@@ -612,110 +706,102 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Multilingual tab switching logic
             const tabBtns = document.querySelectorAll('.tab-btn');
             const tabPanes = document.querySelectorAll('.tab-pane');
+            const form = document.querySelector('form');
+            const imagesInput = document.getElementById('images');
+            const imagesPlaceholder = document.getElementById('images-placeholder');
+            const imagePreviewList = document.getElementById('image-preview-list');
+            const videoUrlList = document.getElementById('video-url-list');
+            const addVideoUrlButton = document.getElementById('add-video-url');
 
             tabBtns.forEach(btn => {
                 btn.addEventListener('click', function() {
                     const targetTab = this.getAttribute('data-tab');
 
-                    // Reset tabs
                     tabBtns.forEach(b => b.classList.remove('active'));
                     tabPanes.forEach(p => p.classList.remove('active'));
 
-                    // Activate selected
                     this.classList.add('active');
                     document.getElementById(`tab-${targetTab}`).classList.add('active');
                 });
             });
 
-            // Media Preview handlers
-            const mediaConfigs = {
-                image: {
-                    input: document.getElementById('image'),
-                    preview: document.getElementById('imagePreview'),
-                    container: document.getElementById('image-preview-container')
-                },
-                video: {
-                    input: document.getElementById('video'),
-                    preview: document.getElementById('videoPreview'),
-                    container: document.getElementById('video-preview-container')
-                },
-                video_thumbnail: {
-                    input: document.getElementById('video_thumbnail'),
-                    preview: document.getElementById('videoThumbnailPreview'),
-                    container: document.getElementById('thumbnail-preview-container')
+            function renderImagePreviews(files) {
+                imagePreviewList.innerHTML = '';
+
+                if (!files || files.length === 0) {
+                    imagesPlaceholder.style.display = 'flex';
+                    return;
                 }
-            };
 
-            const videoThumbnailGroup = document.getElementById('video-thumbnail-group');
+                imagesPlaceholder.style.display = 'none';
 
-            // Setup file inputs listeners
-            Object.keys(mediaConfigs).forEach(key => {
-                const config = mediaConfigs[key];
+                Array.from(files).forEach(file => {
+                    const reader = new FileReader();
+                    const card = document.createElement('div');
+                    card.className = 'selected-media-card';
 
-                config.input.addEventListener('change', function(e) {
-                    const file = e.target.files[0];
-                    if (file) {
-                        const url = URL.createObjectURL(file);
-                        config.preview.src = url;
-                        config.container.style.display = 'flex';
+                    reader.onload = function(event) {
+                        card.innerHTML = `
+                            <img src="${event.target.result}" alt="${file.name}">
+                            <span>${file.name}</span>
+                        `;
+                    };
 
-                        // Specific logic when a video is selected
-                        if (key === 'video') {
-                            videoThumbnailGroup.style.display = 'block';
-                        }
-                    }
+                    reader.readAsDataURL(file);
+                    imagePreviewList.appendChild(card);
                 });
+            }
+
+            function attachRemoveHandler(button) {
+                button.addEventListener('click', function() {
+                    const rows = videoUrlList.querySelectorAll('.video-url-row');
+                    const row = this.closest('.video-url-row');
+
+                    if (rows.length === 1) {
+                        row.querySelector('input').value = '';
+                        return;
+                    }
+
+                    row.remove();
+                });
+            }
+
+            function createVideoUrlRow(value = '') {
+                const row = document.createElement('div');
+                row.className = 'video-url-row';
+                row.innerHTML = `
+                    <input type="url" name="video_urls[]" value="${value}" class="form-control" placeholder="https://www.youtube.com/watch?v=...">
+                    <button type="button" class="btn-inline btn-inline-danger video-url-remove">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                `;
+
+                attachRemoveHandler(row.querySelector('.video-url-remove'));
+                return row;
+            }
+
+            imagesInput.addEventListener('change', function() {
+                renderImagePreviews(this.files);
             });
 
-            // Setup remove preview buttons listeners
-            document.querySelectorAll('.remove-preview-btn').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const inputId = this.getAttribute('data-input-id');
-                    const config = mediaConfigs[inputId];
+            videoUrlList.querySelectorAll('.video-url-remove').forEach(attachRemoveHandler);
 
-                    if (config) {
-                        config.input.value = ''; // clear input
-                        config.preview.src = ''; // clear preview
-                        config.container.style.display = 'none'; // hide preview container
-
-                        // Specific logic when a video is removed
-                        if (inputId === 'video') {
-                            videoThumbnailGroup.style.display = 'none';
-                            // Also clear the thumbnail
-                            const thumbConfig = mediaConfigs['video_thumbnail'];
-                            thumbConfig.input.value = '';
-                            thumbConfig.preview.src = '';
-                            thumbConfig.container.style.display = 'none';
-                        }
-                    }
-                });
+            addVideoUrlButton.addEventListener('click', function() {
+                videoUrlList.appendChild(createVideoUrlRow());
             });
 
-            // Handle Form Reset
-            document.getElementById('btn-reset-form').addEventListener('click', function(e) {
-                // Wait for native reset to populate fields first
+            document.getElementById('btn-reset-form').addEventListener('click', function() {
                 setTimeout(() => {
-                    Object.keys(mediaConfigs).forEach(key => {
-                        const config = mediaConfigs[key];
-                        config.preview.src = '';
-                        config.container.style.display = 'none';
-                    });
-                    videoThumbnailGroup.style.display = 'none';
-
-                    // Switch back to English tab
+                    renderImagePreviews([]);
+                    videoUrlList.innerHTML = '';
+                    videoUrlList.appendChild(createVideoUrlRow());
                     tabBtns[0].click();
                 }, 10);
             });
 
-            // Prevent form submit if tab has validation errors and let the user see it
-            const form = document.querySelector('form');
             form.addEventListener('submit', function() {
-                // A helper to auto-switch to a tab that has validation error displays, if any
                 setTimeout(() => {
                     const firstError = document.querySelector('.tab-pane .text-danger');
                     if (firstError) {
