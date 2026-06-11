@@ -21,7 +21,7 @@ class CategoryController extends Controller
                         ->orWhere('nameInHindi', 'like', "%{$search}%");
                 });
             })
-            ->when($request->filled('status'), fn ($query) => $query->where('status', $request->status === 'active'))
+            ->when($request->filled('status'), fn($query) => $query->where('status', $request->status === 'active'))
             ->orderBy('id', 'desc')
             ->get();
 
@@ -67,13 +67,16 @@ class CategoryController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'nameInHindi' => 'required|string|max:255',
             'nameInGujarati' => 'required|string|max:255',
         ]);
 
         $id = $request->id;
         $category = Category::find($id);
+        if (! $category) {
+            return redirect()->route('admin.category.index')->with('error', 'Category not found');
+        }
         $category->name = $request->name;
         $category->slug = Str::slug($request->name);
         $category->nameInHindi = $request->nameInHindi;

@@ -21,8 +21,8 @@ class UserController extends Controller
                         ->orWhere('mobile', 'like', "%{$search}%");
                 });
             })
-            ->when($request->filled('role'), fn ($query) => $query->where('role', $request->role))
-            ->when($request->filled('status'), fn ($query) => $query->where('is_active', $request->status === 'active'))
+            ->when($request->filled('role'), fn($query) => $query->where('role', $request->role))
+            ->when($request->filled('status'), fn($query) => $query->where('is_active', $request->status === 'active'))
             ->orderBy('id', 'desc')
             ->get();
 
@@ -41,16 +41,20 @@ class UserController extends Controller
                 'name' => 'required|string|max:255',
                 'mobile' => 'required|string|max:255',
                 'email' => 'required|email|max:255',
-                'language' => 'required',
-                'role' => 'required|string|max:255',
+                'language' => 'required|string|in:eng,guj,hin',
+                'role' => 'required|string|in:admin,reporter,user',
+                'password' => 'required_if:role,admin|nullable|string|min:6|confirmed',
             ]);
+
+            $plainPassword = $request->role === 'admin' ? $request->password : '123456';
+
             $user = new User();
             $user->name = $request->name;
             $user->mobile = $request->mobile;
             $user->email = $request->email;
             $user->language = $request->language;
             $user->role = $request->role;
-            $user->password = Hash::make($request->password);
+            $user->password = Hash::make($plainPassword);
             $user->save();
             return redirect()->route('admin.user.index')->with('success', 'User created successfully');
         } catch (\Exception $e) {
@@ -76,17 +80,37 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'mobile' => 'required|string|max:255',
             'email' => 'required|email|max:255',
-            'language' => 'required',
-            'role' => 'required|string|max:255',
+            'language' => 'required|string|in:eng,guj,hin',
+            'role' => 'required|string|in:admin,reporter,user',
+            'password' => 'nullable|string|min:6|confirmed',
         ]);
+
         $user = User::find($id);
-        $user->update([
+
+        if (! $user) {
+            return redirect()->route('admin.user.index')->with('error', 'User not found');
+        }
+
+        $updates = [
             'name' => $request->name,
             'mobile' => $request->mobile,
             'email' => $request->email,
             'language' => $request->language,
             'role' => $request->role,
-        ]);
+        ];
+
+        if ($request->role === 'admin') {
+            if ($request->filled('password')) {
+                $updates['password'] = Hash::make($request->password);
+            }
+        } else {
+            if ($user->role === 'admin') {
+                $updates['password'] = Hash::make('123456');
+            }
+        }
+
+        $user->update($updates);
+
         return redirect()->route('admin.user.index')->with('success', 'User updated successfully');
     }
 

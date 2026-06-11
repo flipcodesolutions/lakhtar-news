@@ -45,9 +45,6 @@
                         </select>
                     </div>
                     <div class="list-filter-actions">
-                        <button type="submit" class="btn">
-                            <i class="fas fa-search"></i> Apply
-                        </button>
                         <a href="{{ route('admin.news.index') }}" class="btn btn-secondary">
                             <i class="fas fa-undo"></i> Reset
                         </a>

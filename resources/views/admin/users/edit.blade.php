@@ -5,7 +5,7 @@
         <div class="content-card">
             <div class="view-header">
                 <h2>User Management</h2>
-                <a href="{{ route('admin.category.index') }}" class="btn">
+                <a href="{{ route('admin.user.index') }}" class="btn">
                     <i class="fas fa-arrow-left"></i> Back to List
                 </a>
             </div>
@@ -50,7 +50,7 @@
                             <select id="role" name="role" class="form-control">
                                 <option disabled {{ old('role', $user->role) ? '' : 'selected' }}>-- Select Role --</option>
                                 <option value="admin" {{ old('role', $user->role) == 'admin' ? 'selected' : '' }}>Admin</option>
-                                <option value="editor" {{ old('role', $user->role) == 'editor' ? 'selected' : '' }}>Editor</option>
+                                <option value="reporter" {{ old('role', $user->role) == 'reporter' ? 'selected' : '' }}>Reporter</option>
                                 <option value="user" {{ old('role', $user->role) == 'user' ? 'selected' : '' }}>User</option>
                             </select>
                             @error('role')
@@ -61,25 +61,23 @@
                     <div class="form-col">
                         <div class="form-group">
                             <label for="language">Language</label>
-                            <select id="language" name="language_id" class="form-control">
-                                <option disabled {{ old('language_id', $user->language_id) ? '' : 'selected' }}>-- Select Language --</option>
-                                @foreach ($languages as $language)
-                                    <option value="{{ $language->id }}" {{ old('language_id', $user->language_id) == $language->id ? 'selected' : '' }}>
-                                        {{ $language->name }}
-                                    </option>
-                                @endforeach
+                            <select id="language" name="language" class="form-control">
+                                <option selected disabled>-- Select Language --</option>
+                                <option @if (old('language') == 'eng' || $user->language == 'eng') selected @endif value="eng">English</option>
+                                <option @if (old('language') == 'guj' || $user->language == 'guj') selected @endif value="guj">Gujarati</option>
+                                <option @if (old('language') == 'hin' || $user->language == 'hin') selected @endif value="hin">Hindi</option>
                             </select>
-                            @error('language_id')
+                            @error('language')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div>
                     </div>
                 </div>
-                <div class="form-row">
+                <div class="form-row" id="password-fields" style="display: none;">
                     <div class="form-col">
                         <div class="form-group">
                             <label for="password">Password</label>
-                            <input type="password" name="password" class="form-control" placeholder="Enter the password" id="password">
+                            <input type="password" name="password" class="form-control" placeholder="Enter the password" id="password" disabled>
                             @error('password')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
@@ -88,7 +86,7 @@
                     <div class="form-col">
                         <div class="form-group">
                             <label for="password_confirmation">Confirm Password</label>
-                            <input type="password" name="password_confirmation" class="form-control" placeholder="Confirm the password" id="password_confirmation">
+                            <input type="password" name="password_confirmation" class="form-control" placeholder="Confirm the password" id="password_confirmation" disabled>
                             @error('password_confirmation')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
@@ -104,3 +102,25 @@
         </div>
     </div>
 @endsection
+
+<script>
+    $(document).ready(function() {
+        function togglePasswordFields() {
+            const role = $('#role').val();
+            const isAdmin = role === 'admin';
+
+            if (isAdmin) {
+                $('#password-fields').show();
+                $('#password').prop('disabled', false);
+                $('#password_confirmation').prop('disabled', false);
+            } else {
+                $('#password-fields').hide();
+                $('#password').prop('disabled', true).val('');
+                $('#password_confirmation').prop('disabled', true).val('');
+            }
+        }
+
+        togglePasswordFields();
+        $('#role').on('change', togglePasswordFields);
+    });
+</script>

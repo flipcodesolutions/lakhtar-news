@@ -72,11 +72,11 @@
                         </div>
                     </div>
                 </div>
-                <div class="form-row">
+                <div class="form-row" id="password-fields" style="display:none;">
                     <div class="form-col">
                         <div class="form-group">
                             <label for="password">Password</label>
-                            <input type="password" name="password" class="form-control" placeholder="Enter the password" id="password">
+                            <input type="password" name="password" class="form-control" placeholder="Enter the password" id="password" disabled>
                             @error('password')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
@@ -85,7 +85,7 @@
                     <div class="form-col">
                         <div class="form-group">
                             <label for="password_confirmation">Confirm Password</label>
-                            <input type="password" name="password_confirmation" class="form-control" placeholder="Confirm the password" id="password_confirmation">
+                            <input type="password" name="password_confirmation" class="form-control" placeholder="Confirm the password" id="password_confirmation" disabled>
                             @error('password_confirmation')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
@@ -105,6 +105,25 @@
 
 <script>
     $(document).ready(function() {
+
+        function togglePasswordFields() {
+            const role = $('#role').val();
+            const isAdmin = role === 'admin';
+
+            if (isAdmin) {
+                $('#password-fields').show();
+                $('#password').prop('disabled', false).prop('required', true);
+                $('#password_confirmation').prop('disabled', false).prop('required', true);
+            } else {
+                $('#password-fields').hide();
+                $('#password').prop('disabled', true).prop('required', false).val('');
+                $('#password_confirmation').prop('disabled', true).prop('required', false).val('');
+                $('.js-error').remove();
+            }
+        }
+
+        togglePasswordFields();
+        $('#role').on('change', togglePasswordFields);
 
         $('form').on('submit', function(e) {
 
@@ -157,25 +176,28 @@
             }
 
             // Password
-            let password = $('#password').val();
+            const selectedRole = $('#role').val();
+            const isAdmin = selectedRole === 'admin';
+            if (isAdmin) {
+                let password = $('#password').val();
 
-            if (password === '') {
-                $('#password').after('<span class="text-danger js-error">Password is required</span>');
-                isValid = false;
-            } else if (password.length < 5) {
-                $('#password').after('<span class="text-danger js-error">Password must be at least 6 characters</span>');
-                isValid = false;
-            }
+                if (password === '') {
+                    $('#password').after('<span class="text-danger js-error">Password is required</span>');
+                    isValid = false;
+                } else if (password.length < 6) {
+                    $('#password').after('<span class="text-danger js-error">Password must be at least 6 characters</span>');
+                    isValid = false;
+                }
 
-            // Confirm Password
-            let confirmPassword = $('#password_confirmation').val();
+                let confirmPassword = $('#password_confirmation').val();
 
-            if (confirmPassword === '') {
-                $('#password_confirmation').after('<span class="text-danger js-error">Confirm Password is required</span>');
-                isValid = false;
-            } else if (password !== confirmPassword) {
-                $('#password_confirmation').after('<span class="text-danger js-error">Passwords do not match</span>');
-                isValid = false;
+                if (confirmPassword === '') {
+                    $('#password_confirmation').after('<span class="text-danger js-error">Confirm Password is required</span>');
+                    isValid = false;
+                } else if (password !== confirmPassword) {
+                    $('#password_confirmation').after('<span class="text-danger js-error">Passwords do not match</span>');
+                    isValid = false;
+                }
             }
 
             if (!isValid) {
