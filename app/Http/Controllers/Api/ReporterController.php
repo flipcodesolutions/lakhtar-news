@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Media;
 use App\Models\News;
 use App\Utils\Util;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -268,28 +270,16 @@ class ReporterController extends Controller
      *                     example="ગુજરાતી સમાચાર વર્ણન"
      *                 ),
      *                 @OA\Property(
-     *                     property="images",
+     *                     property="images[]",
      *                     type="array",
      *                     @OA\Items(type="string", format="binary"),
-     *                     description="Multiple images"
+     *                     description="Multiple images (send as images[])"
      *                 ),
      *                 @OA\Property(
-     *                     property="video_urls",
+     *                     property="video_urls[]",
      *                     type="array",
      *                     @OA\Items(type="string", format="url"),
-     *                     description="YouTube video URLs"
-     *                 ),
-     *                 @OA\Property(
-     *                     property="image",
-     *                     type="string",
-     *                     format="binary",
-     *                     description="Deprecated. Use images[]"
-     *                 ),
-     *                 @OA\Property(
-     *                     property="video",
-     *                     type="string",
-     *                     format="url",
-     *                     description="Deprecated. Use video_urls[] (YouTube only)"
+     *                     description="YouTube video URLs (send as video_urls[])"
      *                 ),
      *                 @OA\Property(
      *                     property="news_type",
@@ -363,7 +353,7 @@ class ReporterController extends Controller
                 $news = new News();
                 $news->category_id = $request->category_id;
                 $news->title = $request->title;
-                $news->slug = Str::slug($request->title);
+                $news->slug = $this->generateUniqueSlug($request->title);
                 $news->user_id = Auth::id();
                 $news->description = $request->description;
                 $news->titleInHindi = $request->titleInHindi;
@@ -459,16 +449,16 @@ class ReporterController extends Controller
      *                     example="અપડેટેડ ગુજરાતી વર્ણન"
      *                 ),
      *                 @OA\Property(
-     *                     property="images",
+     *                     property="images[]",
      *                     type="array",
      *                     @OA\Items(type="string", format="binary"),
-     *                     description="Add multiple images"
+     *                     description="Add multiple images (send as images[])"
      *                 ),
      *                 @OA\Property(
-     *                     property="video_urls",
+     *                     property="video_urls[]",
      *                     type="array",
      *                     @OA\Items(type="string", format="url"),
-     *                     description="Add YouTube video URLs"
+     *                     description="Add YouTube video URLs (send as video_urls[])"
      *                 ),
      *                 @OA\Property(
      *                     property="remove_media_ids",
@@ -480,7 +470,7 @@ class ReporterController extends Controller
      *                     property="image",
      *                     type="string",
      *                     format="binary",
-     *                     description="Deprecated. Use images[]"
+     *                     description="Deprecated. Use images"
      *                 ),
      *                 @OA\Property(
      *                     property="video",
@@ -580,7 +570,7 @@ class ReporterController extends Controller
             DB::transaction(function () use ($request, $news) {
                 $news->category_id = $request->category_id;
                 $news->title = $request->title;
-                $news->slug = Str::slug($request->title);
+                $news->slug = $this->generateUniqueSlug($request->title, $news->id);
                 $news->user_id = Auth::id();
                 $news->description = $request->description;
                 $news->titleInHindi = $request->titleInHindi;
@@ -726,10 +716,58 @@ class ReporterController extends Controller
             'titleInGujarati' => 'required|string|max:255',
             'descriptionInGujarati' => 'required|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-            'images' => 'nullable|array',
+            'images' => [
+                'nullable',
+                function ($attribute, $value, $fail) use ($request) {
+                    $files = $this->extractUploadedImages($request);
+
+                    if (count($files) === 1) {
+                        $validator = Validator::make(
+                            ['file' => $files[0]],
+                            ['file' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048']
+                        );
+
+                        if ($validator->fails()) {
+                            $fail($validator->errors()->first('file'));
+                        }
+                    }
+                },
+            ],
             'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'video' => 'nullable|url',
-            'video_urls' => 'nullable|array',
+            'video_urls' => [
+                'nullable',
+                function ($attribute, $value, $fail) {
+                    if ($value === null) {
+                        return;
+                    }
+
+                    if (is_string($value)) {
+                        $urls = $this->normalizeVideoUrls($value);
+                        if ($urls === []) {
+                            return;
+                        }
+
+                        foreach ($urls as $url) {
+                            if (! filter_var($url, FILTER_VALIDATE_URL)) {
+                                $fail('The video urls field must be a valid URL.');
+                                return;
+                            }
+
+                            if (! $this->isYoutubeUrl($url)) {
+                                $fail('Only YouTube video URLs are allowed.');
+                                return;
+                            }
+                        }
+
+                        return;
+                    }
+
+                    if (! is_array($value)) {
+                        $fail('The video urls field must be an array.');
+                    }
+                },
+            ],
             'video_urls.*' => [
                 'nullable',
                 'url',
@@ -750,14 +788,14 @@ class ReporterController extends Controller
             'publish_date' => 'required|date',
         ]);
 
-        $newImages = collect($request->file('images', []))->filter();
+        $newImages = collect($this->extractUploadedImages($request))->filter();
         $singleImage = $request->file('image');
         if ($singleImage) {
             $newImages->push($singleImage);
         }
         $newImageCount = $newImages->count();
 
-        $videoUrls = collect($request->input('video_urls', []))->filter(fn($value) => filled(trim((string) $value)));
+        $videoUrls = collect($this->extractVideoUrls($request));
         $singleVideo = trim((string) $request->input('video', ''));
         if ($singleVideo !== '') {
             $videoUrls->push($singleVideo);
@@ -779,7 +817,7 @@ class ReporterController extends Controller
 
     private function attachMediaToNews(News $news, Request $request, int $sortOrder = 0): void
     {
-        $images = collect($request->file('images', []))->filter();
+        $images = collect($this->extractUploadedImages($request))->filter();
         $singleImage = $request->file('image');
         if ($singleImage) {
             $images->push($singleImage);
@@ -798,10 +836,18 @@ class ReporterController extends Controller
             $news->media()->attach($media->id, ['sort_order' => $sortOrder++]);
         }
 
-        $videoUrls = collect($request->input('video_urls', []))->filter(fn($value) => filled(trim((string) $value)));
+        $videoUrls = collect($this->extractVideoUrls($request))
+            ->flatMap(fn($value) => $this->normalizeVideoUrls($value))
+            ->filter(fn($value) => filled(trim((string) $value)))
+            ->unique()
+            ->values();
         $singleVideo = trim((string) $request->input('video', ''));
         if ($singleVideo !== '') {
-            $videoUrls->push($singleVideo);
+            $videoUrls = $videoUrls
+                ->merge($this->normalizeVideoUrls($singleVideo))
+                ->filter(fn($value) => filled(trim((string) $value)))
+                ->unique()
+                ->values();
         }
 
         foreach ($videoUrls as $videoUrl) {
@@ -855,6 +901,113 @@ class ReporterController extends Controller
             }
 
             $media->delete();
+        }
+    }
+
+    private function extractUploadedImages(Request $request): array
+    {
+        return array_values(array_filter(array_merge(
+            $this->normalizeUploadedFiles($request->file('images')),
+            $this->normalizeUploadedFiles($request->file('images[]'))
+        )));
+    }
+
+    private function extractVideoUrls(Request $request): array
+    {
+        $urls = array_values(array_filter(array_merge(
+            $this->normalizeVideoUrls($request->input('video_urls')),
+            $this->normalizeVideoUrls($request->input('video_urls[]')),
+            $this->normalizeVideoUrls($request->all()['video_urls[]'] ?? null)
+        ), fn($item) => filled(trim((string) $item))));
+
+        return array_values(array_unique($urls));
+    }
+
+    private function normalizeUploadedFiles(mixed $files): array
+    {
+        if ($files instanceof UploadedFile) {
+            return [$files];
+        }
+
+        if (is_array($files)) {
+            return array_values(array_filter($files));
+        }
+
+        return [];
+    }
+
+    private function normalizeVideoUrls(mixed $value): array
+    {
+        if (is_array($value)) {
+            $parts = [];
+
+            foreach ($value as $item) {
+                $parts = array_merge($parts, $this->normalizeVideoUrls($item));
+            }
+
+            return array_values(array_filter($parts, fn($item) => filled(trim((string) $item))));
+        }
+
+        if (! is_string($value)) {
+            return [];
+        }
+
+        $value = trim(str_replace("\r", "\n", $value));
+        if ($value === '') {
+            return [];
+        }
+
+        $matches = [];
+        preg_match_all('~https?://[^\s,]+~i', $value, $matches);
+        if (! empty($matches[0])) {
+            return array_values(array_filter(array_map('trim', $matches[0])));
+        }
+
+        $parts = [];
+        foreach (explode("\n", $value) as $line) {
+            $line = trim($line);
+            if ($line === '') {
+                continue;
+            }
+
+            foreach (preg_split('/\s*,\s*/', $line) as $segment) {
+                $segment = trim($segment);
+                if ($segment !== '') {
+                    $parts[] = $segment;
+                }
+            }
+        }
+
+        return $parts;
+    }
+
+    private function generateUniqueSlug(string $title, ?int $ignoreNewsId = null): string
+    {
+        $base = Str::slug($title);
+        $base = $base !== '' ? $base : 'news';
+
+        $query = News::query()->where('slug', $base);
+        if ($ignoreNewsId !== null) {
+            $query->where('id', '!=', $ignoreNewsId);
+        }
+
+        if (! $query->exists()) {
+            return $base;
+        }
+
+        $suffix = 2;
+        while (true) {
+            $candidate = $base . '-' . $suffix;
+            $candidateQuery = News::query()->where('slug', $candidate);
+            if ($ignoreNewsId !== null) {
+                $candidateQuery->where('id', '!=', $ignoreNewsId);
+            }
+
+            if (! $candidateQuery->exists()) {
+                return $candidate;
+            }
+
+            $suffix++;
         }
     }
 

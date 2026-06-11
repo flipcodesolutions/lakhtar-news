@@ -2111,31 +2111,21 @@
                                         "type": "string",
                                         "example": "ગુજરાતી સમાચાર વર્ણન"
                                     },
-                                    "images": {
-                                        "description": "Multiple images",
+                                    "images[]": {
+                                        "description": "Multiple images (send as images[])",
                                         "type": "array",
                                         "items": {
                                             "type": "string",
                                             "format": "binary"
                                         }
                                     },
-                                    "video_urls": {
-                                        "description": "YouTube video URLs",
+                                    "video_urls[]": {
+                                        "description": "YouTube video URLs (send as video_urls[])",
                                         "type": "array",
                                         "items": {
                                             "type": "string",
                                             "format": "url"
                                         }
-                                    },
-                                    "image": {
-                                        "description": "Deprecated. Use images[]",
-                                        "type": "string",
-                                        "format": "binary"
-                                    },
-                                    "video": {
-                                        "description": "Deprecated. Use video_urls[] (YouTube only)",
-                                        "type": "string",
-                                        "format": "url"
                                     },
                                     "news_type": {
                                         "type": "string",
@@ -2266,16 +2256,16 @@
                                         "type": "string",
                                         "example": "અપડેટેડ ગુજરાતી વર્ણન"
                                     },
-                                    "images": {
-                                        "description": "Add multiple images",
+                                    "images[]": {
+                                        "description": "Add multiple images (send as images[])",
                                         "type": "array",
                                         "items": {
                                             "type": "string",
                                             "format": "binary"
                                         }
                                     },
-                                    "video_urls": {
-                                        "description": "Add YouTube video URLs",
+                                    "video_urls[]": {
+                                        "description": "Add YouTube video URLs (send as video_urls[])",
                                         "type": "array",
                                         "items": {
                                             "type": "string",
@@ -2290,7 +2280,7 @@
                                         }
                                     },
                                     "image": {
-                                        "description": "Deprecated. Use images[]",
+                                        "description": "Deprecated. Use images",
                                         "type": "string",
                                         "format": "binary"
                                     },
