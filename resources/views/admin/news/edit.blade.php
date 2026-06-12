@@ -532,76 +532,55 @@
                 <!-- Left: Content Inputs -->
                 <div class="news-main">
                     <div class="editor-card">
-                        <!-- Language Navigation Tabs -->
-                        <div class="tab-nav">
-                            <button type="button" class="tab-btn active" data-tab="en">
-                                <i class="fas fa-globe"></i> English
-                            </button>
-                            <button type="button" class="tab-btn" data-tab="hi">
-                                <i class="fas fa-language"></i> Hindi (हिन्दी)
-                            </button>
-                            <button type="button" class="tab-btn" data-tab="gu">
-                                <i class="fas fa-language"></i> Gujarati (ગુજરાતી)
-                            </button>
-                        </div>
+
 
                         <!-- Tab Panes -->
-                        <div class="tab-content">
-                            <!-- English Tab -->
-                            <div class="tab-pane active" id="tab-en">
-                                <div class="form-group">
-                                    <label for="title">Title In English <span class="required-asterisk">*</span></label>
-                                    <input type="text" name="title" id="title" value="{{ old('title', $news->title) }}" class="form-control" placeholder="Enter title in English">
-                                    @error('title')
-                                        <span class="text-danger">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                                <div class="form-group">
-                                    <label for="description">Description In English <span class="required-asterisk">*</span></label>
-                                    <textarea name="description" id="description" rows="12" class="form-control" placeholder="Enter description in English">{{ old('description', $news->description) }}</textarea>
-                                    @error('description')
-                                        <span class="text-danger">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
+                        <div class="form-group">
+                            <label for="title">Title In English <span class="required-asterisk">*</span></label>
+                            <input type="text" name="title" id="title" value="{{ old('title', $news->title) }}" class="form-control" placeholder="Enter title in English">
+                            @error('title')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div class="form-group">
+                            <label for="description">Description In English <span class="required-asterisk">*</span></label>
+                            <textarea name="description" id="description" rows="12" class="form-control" placeholder="Enter description in English">{{ old('description', $news->description) }}</textarea>
+                            @error('description')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
+                        </div>
 
-                            <!-- Hindi Tab -->
-                            <div class="tab-pane" id="tab-hi">
-                                <div class="form-group">
-                                    <label for="titleInHindi">Title In Hindi <span class="required-asterisk">*</span></label>
-                                    <input type="text" name="titleInHindi" id="titleInHindi" value="{{ old('titleInHindi', $news->titleInHindi) }}" class="form-control" placeholder="Enter Hindi title">
-                                    @error('titleInHindi')
-                                        <span class="text-danger">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                                <div class="form-group">
-                                    <label for="descriptionInHindi">Description In Hindi <span class="required-asterisk">*</span></label>
-                                    <textarea name="descriptionInHindi" id="descriptionInHindi" rows="12" class="form-control" placeholder="Enter Hindi description">{{ old('descriptionInHindi', $news->descriptionInHindi) }}</textarea>
-                                    @error('descriptionInHindi')
-                                        <span class="text-danger">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-
-                            <!-- Gujarati Tab -->
-                            <div class="tab-pane" id="tab-gu">
-                                <div class="form-group">
-                                    <label for="titleInGujarati">Title In Gujarati <span class="required-asterisk">*</span></label>
-                                    <input type="text" name="titleInGujarati" id="titleInGujarati" value="{{ old('titleInGujarati', $news->titleInGujarati) }}" class="form-control" placeholder="Enter Gujarati title">
-                                    @error('titleInGujarati')
-                                        <span class="text-danger">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                                <div class="form-group">
-                                    <label for="descriptionInGujarati">Description In Gujarati <span class="required-asterisk">*</span></label>
-                                    <textarea name="descriptionInGujarati" id="descriptionInGujarati" rows="12" class="form-control" placeholder="Enter Gujarati description">{{ old('descriptionInGujarati', $news->descriptionInGujarati) }}</textarea>
-                                    @error('descriptionInGujarati')
-                                        <span class="text-danger">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
+                        <!-- Hindi Tab -->
+                        <div class="form-group">
+                            <label for="titleInHindi">Title In Hindi <span class="required-asterisk">*</span></label>
+                            <input type="text" name="titleInHindi" id="titleInHindi" value="{{ old('titleInHindi', $news->titleInHindi) }}" class="form-control" placeholder="Enter Hindi title">
+                            @error('titleInHindi')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div class="form-group">
+                            <label for="descriptionInHindi">Description In Hindi <span class="required-asterisk">*</span></label>
+                            <textarea name="descriptionInHindi" id="descriptionInHindi" rows="12" class="form-control" placeholder="Enter Hindi description">{{ old('descriptionInHindi', $news->descriptionInHindi) }}</textarea>
+                            @error('descriptionInHindi')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div class="form-group">
+                            <label for="titleInGujarati">Title In Gujarati <span class="required-asterisk">*</span></label>
+                            <input type="text" name="titleInGujarati" id="titleInGujarati" value="{{ old('titleInGujarati', $news->titleInGujarati) }}" class="form-control" placeholder="Enter Gujarati title">
+                            @error('titleInGujarati')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div class="form-group">
+                            <label for="descriptionInGujarati">Description In Gujarati <span class="required-asterisk">*</span></label>
+                            <textarea name="descriptionInGujarati" id="descriptionInGujarati" rows="12" class="form-control" placeholder="Enter Gujarati description">{{ old('descriptionInGujarati', $news->descriptionInGujarati) }}</textarea>
+                            @error('descriptionInGujarati')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
                         </div>
                     </div>
+
                 </div>
 
                 <!-- Right: Metadata & Media Sidebar -->
@@ -629,7 +608,7 @@
                             <label for="news_type">News Type <span class="required-asterisk">*</span></label>
                             <select name="news_type" id="news_type" class="form-control">
                                 <option value="">Select News Type</option>
-                                <option value="normal" {{ old('news_type', $news->news_type) == 'normal' ? 'selected' : '' }}>Normal News</option>
+                                <option value="general" {{ old('news_type', $news->news_type) == 'general' ? 'selected' : '' }}>General News</option>
                                 <option value="breaking" {{ old('news_type', $news->news_type) == 'breaking' ? 'selected' : '' }}>Breaking News</option>
                                 <option value="trending" {{ old('news_type', $news->news_type) == 'trending' ? 'selected' : '' }}>Trending News</option>
                                 <option value="live" {{ old('news_type', $news->news_type) == 'live' ? 'selected' : '' }}>Live News</option>

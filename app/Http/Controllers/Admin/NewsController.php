@@ -147,7 +147,7 @@ class NewsController extends Controller
             })
             ->where('status', $selectedStatus)
             ->orderByDesc('id')
-            ->get();
+            ->paginate(10);
 
         return view('admin.reporter-news.index', compact('news', 'selectedStatus'));
     }
@@ -198,7 +198,7 @@ class NewsController extends Controller
             ],
             'remove_media_ids' => 'nullable|array',
             'remove_media_ids.*' => 'integer',
-            'news_type' => 'required|string|in:normal,breaking,trending,live',
+            'news_type' => 'required|string|in:general,breaking,trending,live',
             'is_featured' => 'required|boolean',
             'publish_date' => 'required|date',
         ]);

@@ -27,7 +27,7 @@ return new class extends Migration
             $table->string('image')->nullable();
             $table->string('video')->nullable();
 
-            $table->enum('news_type', ['normal', 'breaking', 'trending', 'live'])->default('normal');
+            $table->enum('news_type', ['general', 'breaking', 'trending', 'live'])->default('general');
             $table->boolean('is_featured')->default(0);
             $table->bigInteger('total_views')->default(0);
 

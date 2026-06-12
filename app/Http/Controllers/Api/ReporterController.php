@@ -284,7 +284,7 @@ class ReporterController extends Controller
      *                 @OA\Property(
      *                     property="news_type",
      *                     type="string",
-     *                     enum={"normal","breaking","trending","live"},
+     *                     enum={"general","breaking","trending","live"},
      *                     example="breaking"
      *                 ),
      *                 @OA\Property(
@@ -481,7 +481,7 @@ class ReporterController extends Controller
      *                 @OA\Property(
      *                     property="news_type",
      *                     type="string",
-     *                     enum={"normal","breaking","trending","live"},
+     *                     enum={"general","breaking","trending","live"},
      *                     example="breaking"
      *                 ),
      *                 @OA\Property(
@@ -783,7 +783,7 @@ class ReporterController extends Controller
             ],
             'remove_media_ids' => 'nullable|array',
             'remove_media_ids.*' => 'integer',
-            'news_type' => 'required|string|in:normal,breaking,trending,live',
+            'news_type' => 'required|string|in:general,breaking,trending,live',
             'is_featured' => 'required|boolean',
             'publish_date' => 'required|date',
         ]);

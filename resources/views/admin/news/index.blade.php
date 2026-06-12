@@ -30,7 +30,7 @@
                         <label for="news-type">News Type</label>
                         <select id="news-type" name="news_type" class="form-control">
                             <option value="">All Types</option>
-                            <option value="normal" {{ request('news_type') === 'normal' ? 'selected' : '' }}>Normal</option>
+                            <option value="general" {{ request('news_type') === 'general' ? 'selected' : '' }}>General</option>
                             <option value="breaking" {{ request('news_type') === 'breaking' ? 'selected' : '' }}>Breaking</option>
                             <option value="trending" {{ request('news_type') === 'trending' ? 'selected' : '' }}>Trending</option>
                             <option value="live" {{ request('news_type') === 'live' ? 'selected' : '' }}>Live</option>

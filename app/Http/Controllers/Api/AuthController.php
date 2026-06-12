@@ -806,7 +806,7 @@ class AuthController extends Controller
     }
 
     /**
-     * @OA\Post(
+     * @OA\Put(
      *     path="/api/update-my-interest",
      *     tags={"User"},
      *     summary="Update My Interests",

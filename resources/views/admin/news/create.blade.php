@@ -22,7 +22,7 @@
         }
 
         .news-header {
-            display: flex;
+            display: none;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 24px;
@@ -605,7 +605,7 @@
                             <label for="news_type">News Type <span class="required-asterisk">*</span></label>
                             <select name="news_type" id="news_type" class="form-control">
                                 <option value="">Select News Type</option>
-                                <option value="normal" {{ old('news_type') == 'normal' ? 'selected' : '' }}>Normal News</option>
+                                <option value="general" {{ old('news_type') == 'general' ? 'selected' : '' }}>General News</option>
                                 <option value="breaking" {{ old('news_type') == 'breaking' ? 'selected' : '' }}>Breaking News</option>
                                 <option value="trending" {{ old('news_type') == 'trending' ? 'selected' : '' }}>Trending News</option>
                                 <option value="live" {{ old('news_type') == 'live' ? 'selected' : '' }}>Live News</option>
@@ -806,6 +806,184 @@
                     const firstError = document.querySelector('.tab-pane .text-danger');
                     if (firstError) {
                         const parentPane = firstError.closest('.tab-pane');
+                        if (parentPane) {
+                            const tabId = parentPane.id.replace('tab-', '');
+                            const correspondingBtn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+                            if (correspondingBtn) {
+                                correspondingBtn.click();
+                            }
+                        }
+                    }
+                }, 50);
+            });
+        });
+    </script>
+@endsection
+                    videoUrlList.appendChild(createVideoUrlRow());
+                    tabBtns[0].click();
+                }, 10);
+            });
+
+            form.addEventListener('submit', function() {
+                setTimeout(() => {
+                    const firstError = document.querySelector('.tab-pane .text-danger');
+                    if (firstError) {
+                        const parentPane = firstError.closest('.tab-pane');
+                        if (parentPane) {
+                            const tabId = parentPane.id.replace('tab-', '');
+                            const correspondingBtn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+                            if (correspondingBtn) {
+                                correspondingBtn.click();
+                            }
+                        }
+                    }
+                }, 50);
+            });
+        });
+    </script>
+@endsection
+                    videoUrlList.appendChild(createVideoUrlRow());
+                    tabBtns[0].click();
+                }, 10);
+            });
+
+            form.addEventListener('submit', function() {
+                setTimeout(() => {
+                    const firstError = document.querySelector('.tab-pane .text-danger');
+                    if (firstError) {
+                        const parentPane = firstError.closest('.tab-pane');
+                        if (parentPane) {
+                            const tabId = parentPane.id.replace('tab-', '');
+                            const correspondingBtn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+                            if (correspondingBtn) {
+                                correspondingBtn.click();
+                            }
+                        }
+                    }
+                }, 50);
+            });
+        });
+    </script>
+@endsection
+                    videoUrlList.appendChild(createVideoUrlRow());
+                    tabBtns[0].click();
+                }, 10);
+            });
+
+            form.addEventListener('submit', function() {
+                setTimeout(() => {
+                    const firstError = document.querySelector('.tab-pane .text-danger');
+                    if (firstError) {
+                        const parentPane = firstError.closest('.tab-pane');
+                        if (parentPane) {
+                            const tabId = parentPane.id.replace('tab-', '');
+                            const correspondingBtn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+                            if (correspondingBtn) {
+                                correspondingBtn.click();
+                            }
+                        }
+                    }
+                }, 50);
+            });
+        });
+    </script>
+@endsection
+                setTimeout(() => {
+                    renderImagePreviews([]);
+                    videoUrlList.innerHTML = '';
+                    videoUrlList.appendChild(createVideoUrlRow());
+                    tabBtns[0].click();
+                }, 10);
+            });
+
+            form.addEventListener('submit', function() {
+                setTimeout(() => {
+                    const firstError = document.querySelector('.tab-pane .text-danger');
+                    if (firstError) {
+                        const parentPane = firstError.closest('.tab-pane');
+                        if (parentPane) {
+                            const tabId = parentPane.id.replace('tab-', '');
+                            const correspondingBtn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+                            if (correspondingBtn) {
+                                correspondingBtn.click();
+                            }
+                        }
+                    }
+                }, 50);
+            });
+        });
+    </script>
+@endsection
+
+                    if (rows.length === 1) {
+                        row.querySelector('input').value = '';
+                        return;
+                    }
+
+                    row.remove();
+                });
+            }
+
+            function createVideoUrlRow(value = '') {
+                const row = document.createElement('div');
+                row.className = 'video-url-row';
+                row.innerHTML = `
+                    <input type="url" name="video_urls[]" value="${value}" class="form-control" placeholder="https://www.youtube.com/watch?v=...">
+                    <button type="button" class="btn-inline btn-inline-danger video-url-remove">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                `;
+
+                attachRemoveHandler(row.querySelector('.video-url-remove'));
+                return row;
+            }
+
+            imagesInput.addEventListener('change', function() {
+                renderImagePreviews(this.files);
+            });
+
+            videoUrlList.querySelectorAll('.video-url-remove').forEach(attachRemoveHandler);
+
+            addVideoUrlButton.addEventListener('click', function() {
+                videoUrlList.appendChild(createVideoUrlRow());
+            });
+
+            document.getElementById('btn-reset-form').addEventListener('click', function() {
+                setTimeout(() => {
+                    renderImagePreviews([]);
+                    videoUrlList.innerHTML = '';
+                    videoUrlList.appendChild(createVideoUrlRow());
+                    tabBtns[0].click();
+                }, 10);
+            });
+
+            form.addEventListener('submit', function() {
+                setTimeout(() => {
+                    const firstError = document.querySelector('.tab-pane .text-danger');
+                    if (firstError) {
+                        const parentPane = firstError.closest('.tab-pane');
+                        if (parentPane) {
+                            const tabId = parentPane.id.replace('tab-', '');
+                            const correspondingBtn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+                            if (correspondingBtn) {
+                                correspondingBtn.click();
+                            }
+                        }
+                    }
+                }, 50);
+            });
+        });
+    </script>
+@endsection
+                                correspondingBtn.click();
+                            }
+                        }
+                    }
+                }, 50);
+            });
+        });
+    </script>
+@endsection
                         if (parentPane) {
                             const tabId = parentPane.id.replace('tab-', '');
                             const correspondingBtn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);

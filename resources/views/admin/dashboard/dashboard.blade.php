@@ -38,7 +38,7 @@
                 </div>
             </a>
 
-            <a class="stat-card dashboard-stat-card" href="{{ route('admin.reporter-news.index') }}">
+            <a class="stat-card dashboard-stat-card" href="{{ route('admin.reporter-news.index') }}?status=pending">
                 <div class="stat-card-icon bg-warning">
                     <i class="fas fa-clock"></i>
                 </div>
@@ -48,7 +48,7 @@
                 </div>
             </a>
 
-            <div class="stat-card dashboard-stat-card">
+            <a href="{{ route('admin.reporter-news.index') }}?status=approved" class="stat-card dashboard-stat-card">
                 <div class="stat-card-icon bg-success">
                     <i class="fas fa-check-circle"></i>
                 </div>
@@ -56,9 +56,9 @@
                     <div class="stat-card-number">{{ $dashboardStats['approvedNews'] }}</div>
                     <div class="stat-card-title">Approved Stories</div>
                 </div>
-            </div>
+            </a>
 
-            <div class="stat-card dashboard-stat-card">
+            <a href="{{ route('admin.user.index') }}" class="stat-card dashboard-stat-card">
                 <div class="stat-card-icon bg-info">
                     <i class="fas fa-users"></i>
                 </div>
@@ -66,7 +66,7 @@
                     <div class="stat-card-number">{{ $dashboardStats['totalUsers'] }}</div>
                     <div class="stat-card-title">Team Members</div>
                 </div>
-            </div>
+            </a>
         </div>
 
         <div class="dashboard-grid">

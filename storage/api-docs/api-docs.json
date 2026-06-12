@@ -2131,7 +2131,7 @@
                                         "type": "string",
                                         "example": "breaking",
                                         "enum": [
-                                            "normal",
+                                            "general",
                                             "breaking",
                                             "trending",
                                             "live"
@@ -2293,7 +2293,7 @@
                                         "type": "string",
                                         "example": "breaking",
                                         "enum": [
-                                            "normal",
+                                            "general",
                                             "breaking",
                                             "trending",
                                             "live"

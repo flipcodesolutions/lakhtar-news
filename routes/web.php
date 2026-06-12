@@ -16,6 +16,10 @@ Route::get('/', function () {
 
 Route::get('/login', [AuthController::class, 'login'])->name('admin.login');
 Route::post('/login', [AuthController::class, 'loginPost'])->name('admin.login.post');
+Route::get('/forgot-password', [AuthController::class, 'forgotPassword'])->name('admin.password.request');
+Route::post('/forgot-password', [AuthController::class, 'forgotPasswordPost'])->name('admin.password.email');
+Route::get('/reset-password/{token}', [AuthController::class, 'resetPassword'])->name('admin.password.reset');
+Route::post('/reset-password', [AuthController::class, 'resetPasswordPost'])->name('admin.password.store');
 
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('admin.logout')->middleware('auth');
@@ -23,6 +27,10 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('admin.logout')-
 Route::prefix('admin')->middleware('auth')->group(function () {
     // dashboard routes
     Route::get('/dashboard', [HomeController::class, 'dashboard'])->name('admin.dashboard');
+    Route::get('/password/change', [HomeController::class, 'passwordChange'])->name('admin.password.change');
+    Route::post('/password/change', [HomeController::class, 'passwordUpdate'])->name('admin.password.update');
+    Route::get('/profile', [HomeController::class, 'profile'])->name('admin.profile');
+    Route::post('/profile', [HomeController::class, 'profileUpdate'])->name('admin.profile.update');
 
     // user routes
     Route::get('/users', [UserController::class, 'index'])->name('admin.user.index');

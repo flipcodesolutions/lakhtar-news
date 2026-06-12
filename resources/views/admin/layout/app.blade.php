@@ -125,13 +125,10 @@
                             <i class="fas fa-chevron-down"></i>
                         </div>
                         <div class="dropdown-menu user-dropdown">
-                            <a href="#" class="dropdown-item">
+                            <a href="{{ route('admin.profile') }}" class="dropdown-item">
                                 <i class="fas fa-user"></i> Profile
                             </a>
-                            <a href="#" class="dropdown-item">
-                                <i class="fas fa-cog"></i> Settings
-                            </a>
-                            <a href="#" class="dropdown-item">
+                            <a href="{{ route('admin.password.change') }}" class="dropdown-item">
                                 <i class="fas fa-key"></i> Change Password
                             </a>
                             <div class="dropdown-divider"></div>

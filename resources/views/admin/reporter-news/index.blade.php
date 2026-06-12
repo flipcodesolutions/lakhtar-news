@@ -139,12 +139,63 @@
         }
 
         .review-media-box img,
-        .review-media-box video {
+        .review-media-box video,
+        .review-media-box iframe {
             width: 100%;
             max-height: 280px;
             object-fit: contain;
             border-radius: 8px;
             background: #fff;
+        }
+
+        .review-media-box iframe {
+            min-height: 220px;
+            border: none;
+        }
+
+        .review-media-box a {
+            color: #0f5ad1;
+            font-weight: 600;
+            word-break: break-all;
+        }
+
+        .reporter-thumb-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .reporter-thumb-meta {
+            font-size: 11px;
+            color: #64748b;
+            line-height: 1.4;
+        }
+
+        .list-pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .list-pagination-info {
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .list-pagination .pagination {
+            margin: 0;
+        }
+
+        .list-pagination .pagination svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .swal2-container.reporter-review-swal {
+            z-index: 3000 !important;
         }
 
         .review-modal-footer {
@@ -191,7 +242,8 @@
             </form>
 
             <div class="list-results-meta">
-                Showing <strong>{{ $news->count() }}</strong> reporter submissions
+                Showing <strong>{{ $news->firstItem() ?? 0 }}</strong> to <strong>{{ $news->lastItem() ?? 0 }}</strong> of
+                <strong>{{ $news->total() }}</strong> reporter submissions
             </div>
 
             <div class="table-container">
@@ -211,13 +263,24 @@
                     </thead>
                     <tbody>
                         @forelse ($news as $item)
+                            @php
+                                $previewImage = $item->media->firstWhere('media_type', 'image');
+                                $imageCount = $item->media->where('media_type', 'image')->count();
+                                $videoCount = $item->media->where('media_type', 'video')->count();
+                            @endphp
                             <tr>
                                 <td>
-                                    @if ($item->image)
-                                        <img src="{{ asset($item->image) }}" alt="{{ $item->title }}" width="50" height="50" style="object-fit: cover; border-radius: 4px; border: 1px solid #ddd; padding: 2px;">
-                                    @else
-                                        <span style="color: #cbd5e1;"><i class="fas fa-image fa-2x"></i></span>
-                                    @endif
+                                    <div class="reporter-thumb-wrap">
+                                        @if ($previewImage)
+                                            <img src="{{ asset($previewImage->file_path) }}" alt="{{ $item->title }}" width="50" height="50" style="object-fit: cover; border-radius: 4px; border: 1px solid #ddd; padding: 2px;">
+                                        @else
+                                            <span style="color: #cbd5e1;"><i class="fas fa-image fa-2x"></i></span>
+                                        @endif
+                                        <div class="reporter-thumb-meta">
+                                            <div>{{ $imageCount }} image{{ $imageCount === 1 ? '' : 's' }}</div>
+                                            <div>{{ $videoCount }} video{{ $videoCount === 1 ? '' : 's' }}</div>
+                                        </div>
+                                    </div>
                                 </td>
                                 <td style="font-weight: 600; color: #1e293b;">{{ $item->title }}</td>
                                 <td>{{ $item->user?->name ?? '-' }}</td>
@@ -267,6 +330,15 @@
                     </tbody>
                 </table>
             </div>
+
+            @if ($news->hasPages())
+                <div class="list-pagination">
+                    <div class="list-pagination-info">
+                        Page <strong>{{ $news->currentPage() }}</strong> of <strong>{{ $news->lastPage() }}</strong>
+                    </div>
+                    {{ $news->withQueryString()->onEachSide(1)->links() }}
+                </div>
+            @endif
         </div>
     </div>
 
@@ -287,10 +359,23 @@
 
     @php
         $newsItems = $news->map(function ($item) {
-            $video = $item->video;
-            if ($video !== null && !str_starts_with($video, 'http://') && !str_starts_with($video, 'https://')) {
-                $video = asset($video);
-            }
+            $media = $item->media
+                ->map(function ($mediaItem) {
+                    $url = $mediaItem->file_path;
+
+                    if ($mediaItem->media_type === 'image' && $url !== null) {
+                        $url = asset($url);
+                    } elseif ($url !== null && !str_starts_with($url, 'http://') && !str_starts_with($url, 'https://')) {
+                        $url = asset($url);
+                    }
+
+                    return [
+                        'id' => $mediaItem->id,
+                        'type' => $mediaItem->media_type,
+                        'url' => $url,
+                    ];
+                })
+                ->values();
 
             return [
                 'id' => $item->id,
@@ -305,8 +390,7 @@
                 'reporter_email' => $item->user?->email,
                 'reporter_mobile' => $item->user?->mobile,
                 'category' => $item->category?->name,
-                'image' => $item->image ? asset($item->image) : null,
-                'video' => $video,
+                'media' => $media,
                 'publish_date' => $item->publish_date?->format('M d, Y'),
                 'news_type' => $item->news_type,
                 'is_featured' => (bool) $item->is_featured,
@@ -332,20 +416,64 @@
                 .replace(/'/g, '&#039;');
         }
 
-        function renderMedia(label, url, type) {
-            if (!url) {
-                return `<div class="review-media-box"><label>${label}</label><p class="review-empty">Not provided</p></div>`;
+        function isYoutubeUrl(url) {
+            return /(?:youtube\.com|youtu\.be)/i.test(String(url || ''));
+        }
+
+        function getYoutubeEmbedUrl(url) {
+            try {
+                const parsedUrl = new URL(url);
+
+                if (parsedUrl.hostname.includes('youtu.be')) {
+                    const videoId = parsedUrl.pathname.replace('/', '');
+                    return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
+                }
+
+                if (parsedUrl.pathname.includes('/shorts/')) {
+                    const segments = parsedUrl.pathname.split('/').filter(Boolean);
+                    const videoId = segments[segments.length - 1];
+                    return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
+                }
+
+                const videoId = parsedUrl.searchParams.get('v');
+                return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function renderMediaItem(mediaItem, index) {
+            if (!mediaItem || !mediaItem.url) {
+                return '';
             }
 
-            if (type === 'image') {
-                return `<div class="review-media-box"><label>${label}</label><img src="${url}" alt="${label}"></div>`;
+            const label = `${escapeHtml(mediaItem.type === 'image' ? 'Image' : 'Video')} ${index + 1}`;
+
+            if (mediaItem.type === 'image') {
+                return `<div class="review-media-box"><label>${label}</label><img src="${mediaItem.url}" alt="${label}"></div>`;
             }
 
-            if (type === 'video') {
-                return `<div class="review-media-box"><label>${label}</label><video src="${url}" controls></video></div>`;
+            if (mediaItem.type === 'video') {
+                if (isYoutubeUrl(mediaItem.url)) {
+                    const embedUrl = getYoutubeEmbedUrl(mediaItem.url);
+
+                    if (embedUrl) {
+                        return `<div class="review-media-box"><label>${label}</label><iframe src="${embedUrl}" allowfullscreen loading="lazy"></iframe><div style="margin-top: 8px;"><a href="${mediaItem.url}" target="_blank" rel="noopener">Open YouTube URL</a></div></div>`;
+                    }
+                }
+
+                return `<div class="review-media-box"><label>${label}</label><video src="${mediaItem.url}" controls></video></div>`;
             }
 
             return '';
+        }
+
+        function renderMediaGallery(mediaItems) {
+            if (!Array.isArray(mediaItems) || mediaItems.length === 0) {
+                return `<div class="review-media-box"><label>Media</label><p class="review-empty">Not provided</p></div>`;
+            }
+
+            return mediaItems.map((mediaItem, index) => renderMediaItem(mediaItem, index)).join('');
         }
 
         function renderLanguageBlock(language, title, description) {
@@ -412,8 +540,7 @@
                 <div class="review-section">
                     <h4>Media</h4>
                     <div class="review-media">
-                        ${renderMedia('Image', item.image, 'image')}
-                        ${renderMedia('Video', item.video, 'video')}
+                        ${renderMediaGallery(item.media)}
                     </div>
                 </div>
             `;
@@ -451,16 +578,57 @@
             }
         });
 
-        document.getElementById('approveNewsBtn').addEventListener('click', function(event) {
-            if (!confirm('Approve this news article?')) {
-                event.preventDefault();
+        function confirmStatusChange(event, options) {
+            event.preventDefault();
+
+            const targetUrl = event.currentTarget.getAttribute('href');
+            if (!targetUrl) {
+                return;
             }
+
+            if (typeof Swal === 'undefined') {
+                window.location.href = targetUrl;
+                return;
+            }
+
+            Swal.fire({
+                title: options.title,
+                text: options.text,
+                icon: options.icon,
+                customClass: {
+                    container: 'reporter-review-swal',
+                },
+                showCancelButton: true,
+                confirmButtonText: options.confirmButtonText,
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: options.confirmButtonColor,
+                cancelButtonColor: '#64748b',
+                reverseButtons: true,
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = targetUrl;
+                }
+            });
+        }
+
+        document.getElementById('approveNewsBtn').addEventListener('click', function(event) {
+            confirmStatusChange(event, {
+                title: 'Approve News?',
+                text: 'This reporter news will be approved.',
+                icon: 'success',
+                confirmButtonText: 'Yes, approve it',
+                confirmButtonColor: '#15803d',
+            });
         });
 
         document.getElementById('rejectNewsBtn').addEventListener('click', function(event) {
-            if (!confirm('Reject this news article?')) {
-                event.preventDefault();
-            }
+            confirmStatusChange(event, {
+                title: 'Reject News?',
+                text: 'This reporter news will be rejected.',
+                icon: 'warning',
+                confirmButtonText: 'Yes, reject it',
+                confirmButtonColor: '#b7131a',
+            });
         });
     </script>
 @endsection

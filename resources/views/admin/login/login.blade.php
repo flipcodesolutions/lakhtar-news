@@ -1,4 +1,3 @@
-`
 <!DOCTYPE html>
 <html lang="en">
 
@@ -22,7 +21,7 @@
                 @csrf
                 <div class="form-group">
                     <label for="email">Email</label>
-                    <input type="email" id="email" name="email" class="form-control" placeholder="Enter your email">
+                    <input type="email" id="email" name="email" class="form-control" value="{{ old('email') }}" placeholder="Enter your email">
                     @error('email')
                         <span class="text-danger">{{ $message }}</span>
                     @enderror
@@ -34,10 +33,20 @@
                         <span class="text-danger">{{ $message }}</span>
                     @enderror
                 </div>
+                <div class="form-group" style="margin-top: -4px; text-align: right;">
+                    <a href="{{ route('admin.password.request') }}" style="color: #b7131a; font-weight: 600; text-decoration: none;">
+                        Forgot Password?
+                    </a>
+                </div>
                 <div class="form-group">
                     <button type="submit" class="btn btn-block">Login</button>
+                    @if (session('success'))
+                        <div class="alert alert-success" style="margin-top: 12px;">
+                            {{ session('success') }}
+                        </div>
+                    @endif
                     @if (session('error'))
-                        <div class="alert alert-danger">
+                        <div class="alert alert-danger" style="margin-top: 12px;">
                             {{ session('error') }}
                         </div>
                     @endif

@@ -1219,6 +1219,26 @@ body {
     }
 }
 
+/* News Editor (No Tabs) */
+.tab-nav {
+    display: none !important;
+}
+
+.tab-pane,
+.tab-pane.active {
+    display: block !important;
+    animation: none !important;
+    margin-bottom: 18px !important;
+    padding: 18px !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    background: #ffffff !important;
+}
+
+.tab-pane:last-child {
+    margin-bottom: 0 !important;
+}
+
 /* Dashboard Summary Cards */
 .stats-cards {
     display: flex;
