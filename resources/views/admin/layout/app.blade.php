@@ -45,6 +45,11 @@
                             <i class="fas fa-user"></i> Reporter News
                         </a>
                     </li>
+                    <li>
+                        <a href="{{ route('admin.banner.index') }}" class="{{ request()->routeIs('admin.banner.index') ? 'active' : '' }}">
+                            <i class="fas fa-image"></i> Banner
+                        </a>
+                    </li>
 
 
                 </ul>

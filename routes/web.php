@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AuthController;
+use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\HomeController;
 use App\Http\Controllers\Admin\NewsController;
@@ -59,4 +60,12 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     // reporter news routes
     Route::get('/reporter-news', [NewsController::class, 'reporterIndex'])->name('admin.reporter-news.index');
     Route::get('/reporter-news/change-status/{id}/{status}', [NewsController::class, 'changeStatus'])->name('admin.reporter-news.change-status');
+
+    // banner routes
+    Route::get('/banners', [BannerController::class, 'index'])->name('admin.banner.index');
+    Route::get('/banners/create', [BannerController::class, 'create'])->name('admin.banner.create');
+    Route::post('/banners', [BannerController::class, 'store'])->name('admin.banner.store');
+    Route::get('/banners/{id}/edit', [BannerController::class, 'edit'])->name('admin.banner.edit');
+    Route::put('/banners/{id}', [BannerController::class, 'update'])->name('admin.banner.update');
+    Route::get('/banners/{id}', [BannerController::class, 'destroy'])->name('admin.banner.destroy');
 });
