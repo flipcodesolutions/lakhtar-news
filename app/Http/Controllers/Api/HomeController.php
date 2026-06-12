@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Banner;
 use App\Models\Category;
 use App\Models\News;
 use App\Utils\Util;
@@ -1071,6 +1072,126 @@ class HomeController extends Controller
                 $message,
                 [
                     'category' => $response
+                ]
+            );
+        } catch (\Exception $e) {
+            return Util::getErrorMessage($e->getMessage());
+        }
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/banners",
+     *     tags={"Banner"},
+     *     summary="Get Active Banners",
+     *     description="Fetch all active banners whose start date and end date are within the current date range.",
+     *     operationId="getBanners",
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Banners fetched successfully.",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="success",
+     *                 type="boolean",
+     *                 example=true
+     *             ),
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="Banners fetched successfully."
+     *             ),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="banners",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(
+     *                             property="id",
+     *                             type="integer",
+     *                             example=1
+     *                         ),
+     *                         @OA\Property(
+     *                             property="title",
+     *                             type="string",
+     *                             example="Breaking News Banner"
+     *                         ),
+     *                         @OA\Property(
+     *                             property="image",
+     *                             type="string",
+     *                             example="banners/banner-1.jpg"
+     *                         ),
+     *                         @OA\Property(
+     *                             property="link",
+     *                             type="string",
+     *                             nullable=true,
+     *                             example="https://example.com"
+     *                         ),
+     *                         @OA\Property(
+     *                             property="start_date",
+     *                             type="string",
+     *                             format="date",
+     *                             example="2026-06-01"
+     *                         ),
+     *                         @OA\Property(
+     *                             property="end_date",
+     *                             type="string",
+     *                             format="date",
+     *                             example="2026-06-30"
+     *                         ),
+     *                         @OA\Property(
+     *                             property="is_active",
+     *                             type="boolean",
+     *                             example=true
+     *                         ),
+     *                         @OA\Property(
+     *                             property="created_at",
+     *                             type="string",
+     *                             format="date-time"
+     *                         ),
+     *                         @OA\Property(
+     *                             property="updated_at",
+     *                             type="string",
+     *                             format="date-time"
+     *                         )
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal Server Error",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="success",
+     *                 type="boolean",
+     *                 example=false
+     *             ),
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="Something went wrong."
+     *             )
+     *         )
+     *     )
+     * )
+     */
+
+    public function getBanners()
+    {
+        try {
+            $banners = Banner::orderByDesc('id')->where('start_date', '<=', now())->where('end_date', '>=', now())->where('is_active', 1)->get();
+
+            return Util::getSuccessMessage(
+                'Banners fetched successfully.',
+                [
+                    'banners' => $banners
                 ]
             );
         } catch (\Exception $e) {

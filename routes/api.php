@@ -37,6 +37,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/video-news', [HomeController::class, 'getVideoNews']);
     Route::get('/get-news/{slug}', [HomeController::class, 'getNewsBySlug']);
 
+// banner
+    Route::get('/banners', [HomeController::class, 'getBanners']);
+
 
 
     // Reporter side's APIs
