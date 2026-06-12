@@ -15,7 +15,7 @@
                 <div class="form-row">
                     <div class="form-col">
                         <div class="form-group">
-                            <label for="title">Title<span class="text-sm text-danger">*</span> </label>
+                            <label for="title">Title</label>
                             <input type="text" id="title" name="title" value="{{ old('title') }}" class="form-control" placeholder="Enter title">
                             @error('title')
                                 <span class="text-danger">{{ $message }}</span>
