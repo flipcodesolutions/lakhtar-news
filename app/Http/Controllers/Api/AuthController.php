@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\UserBookmark;
 use App\Models\UserFavoriteCategory;
 use App\Utils\Util;
 use Illuminate\Http\Request;
@@ -710,7 +711,9 @@ class AuthController extends Controller
                 'language' => 'required|in:eng,hin,guj',
             ]);
 
-            $message = match ($request->language) {
+            $language = Auth::user()->language ?? 'eng';
+
+            $message = match ($language) {
                 'hin' => 'भाषा सफलतापूर्वक बदली गई.',
                 'guj' => 'ભાષા સફળતાપૂર્વક બદલાઈ.',
                 default => 'Language changed successfully.',
@@ -781,6 +784,12 @@ class AuthController extends Controller
 
             $language = Auth::user()?->language ?? 'eng';
 
+            $message = match ($language) {
+                'hin' => 'मेरी रुचि सफलतापूर्वक प्राप्त हो गया।',
+                'guj' => 'મારી રુચિ સફળતાપૂર્વક મળ્યો.',
+                default => 'My interest fetched successfully.',
+            };
+
             $categoryColumn = match ($language) {
                 'hin' => 'categoryHindi',
                 'guj' => 'categoryGujarati',
@@ -797,7 +806,7 @@ class AuthController extends Controller
                     ];
                 });
 
-            return Util::getSuccessMessage('My interest', [
+            return Util::getSuccessMessage($message, [
                 'categories' => $categories
             ]);
         } catch (\Exception $e) {
@@ -899,6 +908,13 @@ class AuthController extends Controller
      */
     public function updateMyInterest(Request $request)
     {
+        $language = Auth::user()->language ?? 'eng';
+
+        $message = match ($language) {
+            'hin' => 'मेरी रुचि सफलतापूर्वक अपडेट हो गई।',
+            'guj' => 'મારી રુચિ સફળતાપૂર્વક અપડેટ થઈ',
+            default => 'My interest updated successfully',
+        };
         try {
             $request->validate([
                 'categories' => 'required|array',
@@ -908,6 +924,375 @@ class AuthController extends Controller
             $user->userFavoriteCategories()->sync($request->categories);
 
             return Util::getSuccessMessage('My interest updated successfully');
+        } catch (\Exception $e) {
+            return Util::getErrorMessage($e->getMessage());
+        }
+    }
+
+    // bookmark APIs
+
+    /**
+     * @OA\Get(
+     *     path="/my-bookmarks",
+     *     tags={"Bookmarks"},
+     *     summary="Get My Bookmarks",
+     *     description="Retrieve all bookmarked news for the authenticated user.",
+     *     operationId="getMyBookmarks",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Bookmarks fetched successfully",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="success",
+     *                 type="boolean",
+     *                 example=true
+     *             ),
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="My bookmarks"
+     *             ),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="bookmarks",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(
+     *                             property="id",
+     *                             type="integer",
+     *                             example=1
+     *                         ),
+     *                         @OA\Property(
+     *                             property="user_id",
+     *                             type="integer",
+     *                             example=5
+     *                         ),
+     *                         @OA\Property(
+     *                             property="news_id",
+     *                             type="integer",
+     *                             example=10
+     *                         ),
+     *                         @OA\Property(
+     *                             property="created_at",
+     *                             type="string",
+     *                             format="date-time"
+     *                         ),
+     *                         @OA\Property(
+     *                             property="updated_at",
+     *                             type="string",
+     *                             format="date-time"
+     *                         ),
+     *
+     *                         @OA\Property(
+     *                             property="news",
+     *                             type="object",
+     *                             @OA\Property(
+     *                                 property="id",
+     *                                 type="integer",
+     *                                 example=10
+     *                             ),
+     *                             @OA\Property(
+     *                                 property="title",
+     *                                 type="string",
+     *                                 example="Breaking News Title"
+     *                             ),
+     *                             @OA\Property(
+     *                                 property="slug",
+     *                                 type="string",
+     *                                 example="breaking-news-title"
+     *                             ),
+     *                             @OA\Property(
+     *                                 property="image",
+     *                                 type="string",
+     *                                 example="news/news.jpg"
+     *                             ),
+     *                             @OA\Property(
+     *                                 property="news_type",
+     *                                 type="string",
+     *                                 example="breaking"
+     *                             )
+     *                         )
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="Unauthenticated."
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal Server Error",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="success",
+     *                 type="boolean",
+     *                 example=false
+     *             ),
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="Something went wrong."
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function getMyBookmarks()
+    {
+        $language = Auth::user()->language ?? 'eng';
+
+        $message = match ($language) {
+            'hin' => 'मेरे बुकमार्क्स',
+            'guj' => 'મારા બુકમાર્ક્સ',
+            default => 'My bookmarks',
+        };
+        try {
+            $bookmarks = UserBookmark::where('user_id', Auth::id())->with('news')->get();
+
+            return Util::getSuccessMessage($message, [
+                'bookmarks' => $bookmarks
+            ]);
+        } catch (\Exception $e) {
+            return Util::getErrorMessage($e->getMessage());
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/add-bookmark-news",
+     *     tags={"Bookmarks"},
+     *     summary="Add Bookmark News",
+     *     description="Bookmark a news article for the authenticated user.",
+     *     operationId="addBookmarkNews",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"news_id"},
+     *             @OA\Property(
+     *                 property="news_id",
+     *                 type="integer",
+     *                 example=1,
+     *                 description="ID of the news to bookmark"
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="News bookmarked successfully",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="success",
+     *                 type="boolean",
+     *                 example=true
+     *             ),
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="News bookmarked successfully"
+     *             ),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items()
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation Error",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="The news id field is required."
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="Unauthenticated."
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal Server Error",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="success",
+     *                 type="boolean",
+     *                 example=false
+     *             ),
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="Something went wrong."
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function addBookmarkNews(Request $request)
+    {
+        $language = Auth::user()->language ?? 'eng';
+
+        $message = match ($language) {
+            'hin' => 'समाचार सफलतापूर्वक बुकमार्क किया गया',
+            'guj' => 'સમાચાર સફળતાપૂર્વક બુકમાર્ક કર્યા',
+            default => 'News bookmarked successfully',
+        };
+
+        try {
+            $request->validate([
+                'news_id' => 'required|integer',
+            ]);
+
+            $user = User::find(Auth::user()->id);
+            $user->userBookmarks()->create([
+                'news_id' => $request->news_id,
+            ]);
+
+            return Util::getSuccessMessage($message);
+        } catch (\Exception $e) {
+            return Util::getErrorMessage($e->getMessage());
+        }
+    }
+
+    /**
+     * @OA\Delete(
+     *     path="/remove-bookmark/{id}",
+     *     tags={"Bookmarks"},
+     *     summary="Remove Bookmark News",
+     *     description="Remove a bookmarked news article for the authenticated user.",
+     *     operationId="removeBookmarkNews",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"news_id"},
+     *             @OA\Property(
+     *                 property="news_id",
+     *                 type="integer",
+     *                 example=1,
+     *                 description="ID of the bookmarked news to remove"
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="News bookmark successfully removed",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="success",
+     *                 type="boolean",
+     *                 example=true
+     *             ),
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="News bookmark successfully removed"
+     *             ),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items()
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation Error",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="The news id field is required."
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="Unauthenticated."
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal Server Error",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="success",
+     *                 type="boolean",
+     *                 example=false
+     *             ),
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="Something went wrong."
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function removeBookmarkNews(Request $request)
+    {
+        try {
+            $request->validate([
+                'news_id' => 'required|integer',
+            ]);
+
+            $language = Auth::user()->language ?? 'eng';
+
+            $message = match ($language) {
+                'hin' => 'न्यूज़ बुकमार्क सफलतापूर्वक हटा दिया गया।',
+                'guj' => 'સમાચાર બુકમાર્ક સફળતાપૂર્વક દૂર કર્યા',
+                default => 'News bookmark successfully removed',
+            };
+
+            $user = User::find(Auth::user()->id);
+            $user->userBookmarks()->where('news_id', $request->news_id)->delete();
+
+            return Util::getSuccessMessage($message);
         } catch (\Exception $e) {
             return Util::getErrorMessage($e->getMessage());
         }

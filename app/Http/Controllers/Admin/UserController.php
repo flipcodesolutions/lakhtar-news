@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
@@ -117,7 +118,23 @@ class UserController extends Controller
     public function destroy($id)
     {
         $user = User::find($id);
-        $user->delete();
+
+        if (! $user) {
+            return redirect()->route('admin.user.index')->with('error', 'User not found');
+        }
+
+        if ($user->news()->exists()) {
+            return redirect()->route('admin.user.index')->with('error', 'This user cannot be deleted because news records are linked to this account. Please delete or reassign the news first.');
+        }
+
+        DB::transaction(function () use ($user) {
+            $user->favoriteCategories()->detach();
+            $user->newsViews()->delete();
+            $user->notifications()->delete();
+            DB::table('user_bookmarks')->where('user_id', $user->id)->delete();
+            $user->delete();
+        });
+
         return redirect()->route('admin.user.index')->with('success', 'User deleted successfully');
     }
 }

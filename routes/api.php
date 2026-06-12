@@ -37,9 +37,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/video-news', [HomeController::class, 'getVideoNews']);
     Route::get('/get-news/{slug}', [HomeController::class, 'getNewsBySlug']);
 
-// banner
+    // banner
     Route::get('/banners', [HomeController::class, 'getBanners']);
 
+    // bookmark
+    Route::get('/my-bookmarks', [AuthController::class, 'getMyBookmarks']);
+    Route::post('/add-bookmark-news', [AuthController::class, 'addBookmarkNews']);
+    Route::delete('/remove-bookmark/{id}', [AuthController::class, 'removeBookmarkNews']);
 
 
     // Reporter side's APIs
