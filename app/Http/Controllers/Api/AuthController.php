@@ -1297,4 +1297,47 @@ class AuthController extends Controller
             return Util::getErrorMessage($e->getMessage());
         }
     }
+
+    public function getWatchHistories(Request $request)
+    {
+        $language = Auth::user()->language ?? 'eng';
+
+        $message = match ($language) {
+            'hin' => 'वॉच हिस्ट्री सफलतापूर्वक प्राप्त कर ली गई।',
+            'guj' => 'જુઓ ઇતિહાસ સફળતાપૂર્વક મેળવે છે',
+            default => 'Watch histories retrieved successfully',
+        };
+
+        $request->validate([
+            'page' => 'required|integer|min:1|max:100',
+            'per_page' => 'required|integer|min:1|max:100',
+        ]);
+
+        $user = User::find(Auth::user()->id);
+        $watchHistories = $user->watchHistories()->get();
+
+        return Util::getSuccessMessage($message, $watchHistories);
+    }
+
+    public function addWatchHistory(Request $request)
+    {
+        try {
+            $language = Auth::user()->language ?? 'eng';
+
+            $message = match ($language) {
+                'hin' => 'वॉच हिस्ट्री जानकर ली गई।',
+                'guj' => 'જુઓ ઇતિહાસ સફળતાપૂર્વક મેળવે છે',
+                default => 'Watch history successfully added',
+            };
+
+            $user = User::find(Auth::user()->id);
+            $user->watchHistories()->create([
+                'news_id' => $request->news_id,
+            ]);
+
+            return Util::getSuccessMessage($message);
+        } catch (\Exception $e) {
+            return Util::getErrorMessage($e->getMessage());
+        }
+    }
 }

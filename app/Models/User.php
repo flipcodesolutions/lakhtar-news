@@ -80,4 +80,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(VideoEdit::class);
     }
+
+    public function watchHistories()
+    {
+        return $this->hasMany(WatchHistory::class);
+    }
 }

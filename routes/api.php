@@ -45,6 +45,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/add-bookmark-news', [AuthController::class, 'addBookmarkNews']);
     Route::delete('/remove-bookmark/{id}', [AuthController::class, 'removeBookmarkNews']);
 
+    // watch history
+    Route::get('/watch-histories', [AuthController::class, 'getWatchHistories']);
+    Route::post('/add-watch-history', [AuthController::class, 'addWatchHistory']);
+    Route::delete('/remove-watch-history/{id}', [AuthController::class, 'removeWatchHistory']);
+
+
 
     // Reporter side's APIs
     Route::get('/my-news', [ReporterController::class, 'getMyNews']);
