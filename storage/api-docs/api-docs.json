@@ -2366,8 +2366,25 @@
                     "Reporter"
                 ],
                 "summary": "Get Reporter News",
-                "description": "Fetch all news created by the authenticated reporter. News title and description are returned according to the user's selected language.",
+                "description": "Fetch all news created by the authenticated reporter. Optionally filter news by status (pending, approved, rejected). News title and description are returned according to the user's selected language.",
                 "operationId": "getReporterNews",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter news by status",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "---",
+                            "enum": [
+                                "pending",
+                                "approved",
+                                "rejected"
+                            ]
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Reporter news fetched successfully.",
@@ -2381,7 +2398,7 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Reporter news fetched successfully in English"
+                                            "example": "Reporter news fetched successfully"
                                         },
                                         "data": {
                                             "properties": {
@@ -2407,7 +2424,8 @@
                                                             },
                                                             "image": {
                                                                 "type": "string",
-                                                                "example": "news/1718100000_abcd1234.webp"
+                                                                "example": "news/1718100000_abcd1234.webp",
+                                                                "nullable": true
                                                             },
                                                             "video": {
                                                                 "type": "string",
@@ -2454,7 +2472,7 @@
                                                             },
                                                             "status": {
                                                                 "type": "string",
-                                                                "example": "published"
+                                                                "example": "pending"
                                                             },
                                                             "created_at": {
                                                                 "type": "string",
@@ -2927,6 +2945,96 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Something went wrong."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/my-dashboard-stat": {
+            "get": {
+                "tags": [
+                    "Reporter"
+                ],
+                "summary": "Dashboard Statistics",
+                "description": "Get dashboard statistics for the authenticated reporter.",
+                "operationId": "dashboardStat",
+                "responses": {
+                    "200": {
+                        "description": "Dashboard statistics fetched successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Dashboard statistics fetched successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "total_news": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "total_pending_news": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "total_rejected_news": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "total_approved_news": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Forbidden."
                                         }
                                     },
                                     "type": "object"

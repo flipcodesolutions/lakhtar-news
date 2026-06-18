@@ -57,4 +57,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/create-news', [ReporterController::class, 'createNews']);
     Route::put('/update-news/{id}', [ReporterController::class, 'updateNews']);
     Route::delete('/delete-news/{id}', [ReporterController::class, 'deleteNews']);
+    Route::get('/my-dashboard-stat', [ReporterController::class, 'dashboardStat']);
 });

@@ -22,83 +22,148 @@ class ReporterController extends Controller
      *     path="/my-news",
      *     tags={"Reporter"},
      *     summary="Get Reporter News",
-     *     description="Fetch all news created by the authenticated reporter. News title and description are returned according to the user's selected language.",
+     *     description="Fetch all news created by the authenticated reporter. Optionally filter news by status (pending, approved, rejected). News title and description are returned according to the user's selected language.",
      *     operationId="getReporterNews",
      *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(
+     *         name="status",
+     *         in="query",
+     *         required=false,
+     *         description="Filter news by status",
+     *         @OA\Schema(
+     *             type="string",
+     *             enum={"pending","approved","rejected"},
+     *             example="---"
+     *         )
+     *     ),
      *
      *     @OA\Response(
      *         response=200,
      *         description="Reporter news fetched successfully.",
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(
      *                 property="success",
      *                 type="boolean",
      *                 example=true
      *             ),
+     *
      *             @OA\Property(
      *                 property="message",
      *                 type="string",
-     *                 example="Reporter news fetched successfully in English"
+     *                 example="Reporter news fetched successfully"
      *             ),
+     *
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
+     *
      *                 @OA\Property(
      *                     property="news",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example=1),
+     *
+     *                         @OA\Property(
+     *                             property="id",
+     *                             type="integer",
+     *                             example=1
+     *                         ),
+     *
      *                         @OA\Property(
      *                             property="title",
      *                             type="string",
      *                             example="Breaking News Title"
      *                         ),
+     *
      *                         @OA\Property(
      *                             property="description",
      *                             type="string",
      *                             example="This is the news description."
      *                         ),
+     *
      *                         @OA\Property(
      *                             property="slug",
      *                             type="string",
      *                             example="breaking-news-title"
      *                         ),
+     *
      *                         @OA\Property(
      *                             property="image",
      *                             type="string",
+     *                             nullable=true,
      *                             example="news/1718100000_abcd1234.webp"
      *                         ),
+     *
      *                         @OA\Property(
      *                             property="video",
      *                             type="string",
      *                             nullable=true,
      *                             example="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
      *                         ),
+     *
      *                         @OA\Property(
      *                             property="media",
      *                             type="array",
+     *
      *                             @OA\Items(
      *                                 type="object",
-     *                                 @OA\Property(property="id", type="integer", example=10),
-     *                                 @OA\Property(property="media_type", type="string", example="image"),
-     *                                 @OA\Property(property="file_path", type="string", example="news/1718100000_abcd1234.webp"),
-     *                                 @OA\Property(property="thumbnail", type="string", nullable=true, example=null),
-     *                                 @OA\Property(property="caption", type="string", nullable=true, example=null),
-     *                                 @OA\Property(property="sort_order", type="integer", example=0)
+     *
+     *                                 @OA\Property(
+     *                                     property="id",
+     *                                     type="integer",
+     *                                     example=10
+     *                                 ),
+     *
+     *                                 @OA\Property(
+     *                                     property="media_type",
+     *                                     type="string",
+     *                                     example="image"
+     *                                 ),
+     *
+     *                                 @OA\Property(
+     *                                     property="file_path",
+     *                                     type="string",
+     *                                     example="news/1718100000_abcd1234.webp"
+     *                                 ),
+     *
+     *                                 @OA\Property(
+     *                                     property="thumbnail",
+     *                                     type="string",
+     *                                     nullable=true,
+     *                                     example=null
+     *                                 ),
+     *
+     *                                 @OA\Property(
+     *                                     property="caption",
+     *                                     type="string",
+     *                                     nullable=true,
+     *                                     example=null
+     *                                 ),
+     *
+     *                                 @OA\Property(
+     *                                     property="sort_order",
+     *                                     type="integer",
+     *                                     example=0
+     *                                 )
      *                             )
      *                         ),
+     *
      *                         @OA\Property(
      *                             property="news_type",
      *                             type="string",
      *                             example="breaking"
      *                         ),
+     *
      *                         @OA\Property(
      *                             property="status",
      *                             type="string",
-     *                             example="published"
+     *                             example="pending"
      *                         ),
+     *
      *                         @OA\Property(
      *                             property="created_at",
      *                             type="string",
@@ -168,9 +233,13 @@ class ReporterController extends Controller
 
             $news = News::with('media')
                 ->where('user_id', Auth::id())
+                ->when($request->filled('status'), function ($query) use ($request) {
+                    $query->where('status', $request->status);
+                })
                 ->orderBy('id', 'desc')
                 ->get()
                 ->map(function ($item) use ($titleColumn, $descriptionColumn) {
+
                     $media = $item->media->map(function ($mediaItem) {
                         return [
                             'id' => $mediaItem->id,
@@ -206,7 +275,6 @@ class ReporterController extends Controller
             return Util::getErrorMessage($e->getMessage());
         }
     }
-
     /**
      * @OA\Post(
      *     path="/create-news",
@@ -1022,5 +1090,130 @@ class ReporterController extends Controller
             'youtu.be',
             'www.youtu.be',
         ], true);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/my-dashboard-stat",
+     *     tags={"Reporter"},
+     *     summary="Dashboard Statistics",
+     *     description="Get dashboard statistics for the authenticated reporter.",
+     *     operationId="dashboardStat",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Dashboard statistics fetched successfully",
+     *         @OA\JsonContent(
+     *             type="object",
+     *
+     *             @OA\Property(
+     *                 property="success",
+     *                 type="boolean",
+     *                 example=true
+     *             ),
+     *
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="Dashboard statistics fetched successfully"
+     *             ),
+     *
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *
+     *                 @OA\Property(
+     *                     property="total_news",
+     *                     type="integer",
+     *                     example=10
+     *                 ),
+     *
+     *                 @OA\Property(
+     *                     property="total_pending_news",
+     *                     type="integer",
+     *                     example=5
+     *                 ),
+     *
+     *                 @OA\Property(
+     *                     property="total_rejected_news",
+     *                     type="integer",
+     *                     example=2
+     *                 ),
+     *
+     *                 @OA\Property(
+     *                     property="total_approved_news",
+     *                     type="integer",
+     *                     example=3
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="Unauthenticated."
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="Forbidden."
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function dashboardStat()
+    {
+        try {
+
+            $language = Auth::user()?->language ?? 'eng';
+
+            $total_news = News::where('user_id', Auth::id())->count();
+
+            $total_pending_news = News::where('user_id', Auth::id())
+                ->where('status', 'pending')
+                ->count();
+
+            $total_rejected_news = News::where('user_id', Auth::id())
+                ->where('status', 'rejected')
+                ->count();
+
+            $total_approved_news = News::where('user_id', Auth::id())
+                ->where('status', 'approved')
+                ->count();
+
+            $data = [
+                'total_news' => $total_news,
+                'total_pending_news' => $total_pending_news,
+                'total_rejected_news' => $total_rejected_news,
+                'total_approved_news' => $total_approved_news,
+            ];
+
+            $message = match ($language) {
+                'hin' => 'डैशबोर्ड के आँकड़े सफलतापूर्वक प्राप्त कर लिए गए।',
+                'guj' => 'ડેશબોર્ડ આંકડા સફળતાપૂર્વક મેળવ્યા.',
+                default => 'Dashboard statistics fetched successfully',
+            };
+
+            return Util::getSuccessMessage(
+                $message,
+                $data
+            );
+        } catch (\Exception $e) {
+            return Util::getErrorMessage($e->getMessage());
+        }
     }
 }
