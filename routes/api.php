@@ -54,8 +54,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Reporter side's APIs
     Route::get('/my-news', [ReporterController::class, 'getMyNews']);
+    Route::get('/my-news/{id}', [ReporterController::class, 'getMyNewsDetails']);
     Route::post('/create-news', [ReporterController::class, 'createNews']);
     Route::put('/update-news/{id}', [ReporterController::class, 'updateNews']);
     Route::delete('/delete-news/{id}', [ReporterController::class, 'deleteNews']);
     Route::get('/my-dashboard-stat', [ReporterController::class, 'dashboardStat']);
+
+    Route::get('/media', [ReporterController::class, 'getAllMedia']);
 });

@@ -276,6 +276,108 @@ class ReporterController extends Controller
         }
     }
     /**
+     * @OA\Get(
+     *     path="/my-news/{id}",
+     *     summary="Get My News Details",
+     *     description="Retrieve details of a specific news item created by the authenticated reporter, including associated media.",
+     *     operationId="getMyNewsDetails",
+     *     tags={"Reporter News"},
+     *     security={{"bearerAuth":{}}},
+     *
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="News ID",
+     *         @OA\Schema(
+     *             type="integer",
+     *             example=1
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Reporter news details fetched successfully",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="status",
+     *                 type="boolean",
+     *                 example=true
+     *             ),
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="Reporter news details fetched successfully"
+     *             ),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="news",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="title", type="string", example="Breaking News"),
+     *                     @OA\Property(property="description", type="string", example="News description"),
+     *                     @OA\Property(property="user_id", type="integer", example=5),
+     *                     @OA\Property(
+     *                         property="media",
+     *                         type="array",
+     *                         @OA\Items(
+     *                             type="object",
+     *                             @OA\Property(property="id", type="integer", example=10),
+     *                             @OA\Property(property="media_url", type="string", example="https://example.com/image.jpg"),
+     *                             @OA\Property(property="media_type", type="string", example="image")
+     *                         )
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=404,
+     *         description="News not found or does not belong to the authenticated user"
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal Server Error"
+     *     )
+     * )
+     */
+    public function getMyNewsDetails($id)
+    {
+        try {
+            $language = Auth::user()?->language ?? 'guj';
+            $message = match ($language) {
+                'hin' => 'रिपोर्टर की खबरें सफलतापूर्वक प्राप्त कर ली गईं।',
+                'guj' => 'રિપોર્ટર સમાચાર સફળતાપૂર્વક મેળવ્યા.',
+                default => 'Reporter news details fetched successfully',
+            };
+
+            $news = News::with('media')
+                ->where('id', $id)
+                ->where('user_id', Auth::id())
+                ->firstOrFail();
+
+            return Util::getSuccessMessage(
+                $message,
+                [
+                    'news' => $news
+                ]
+            );
+        } catch (\Exception $e) {
+            return Util::getErrorMessage($e->getMessage());
+        }
+    }
+
+    /**
      * @OA\Post(
      *     path="/create-news",
      *     tags={"Reporter"},
@@ -960,6 +1062,10 @@ class ReporterController extends Controller
         $news->media()->detach($mediaItems->pluck('id')->all());
 
         foreach ($mediaItems as $media) {
+            if ($media->news()->exists()) {
+                continue;
+            }
+
             if ($media->media_type === 'image' && $media->file_path) {
                 $absolutePath = public_path($media->file_path);
 
@@ -1211,6 +1317,95 @@ class ReporterController extends Controller
             return Util::getSuccessMessage(
                 $message,
                 $data
+            );
+        } catch (\Exception $e) {
+            return Util::getErrorMessage($e->getMessage());
+        }
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/media",
+     *     summary="Get All Media",
+     *     description="Retrieve a list of all media records.",
+     *     operationId="getAllMedia",
+     *     tags={"Media"},
+     *     security={{"bearerAuth":{}}},
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Media list fetched successfully",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="status",
+     *                 type="boolean",
+     *                 example=true
+     *             ),
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="Media list fetched successfully"
+     *             ),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(
+     *                         property="id",
+     *                         type="integer",
+     *                         example=1
+     *                     ),
+     *                     @OA\Property(
+     *                         property="media_url",
+     *                         type="string",
+     *                         example="https://example.com/uploads/media/image.jpg"
+     *                     ),
+     *                     @OA\Property(
+     *                         property="media_type",
+     *                         type="string",
+     *                         example="image"
+     *                     ),
+     *                     @OA\Property(
+     *                         property="created_at",
+     *                         type="string",
+     *                         format="date-time"
+     *                     ),
+     *                     @OA\Property(
+     *                         property="updated_at",
+     *                         type="string",
+     *                         format="date-time"
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal Server Error"
+     *     )
+     * )
+     */
+    public function getAllMedia()
+    {
+        try {
+            $language = Auth::user()?->language ?? 'guj';
+            $message = match ($language) {
+                'hin' => 'मीडिया सूची सफलतापूर्वक प्राप्त की गई',
+                'guj' => 'મીડિયા સૂચિ સફળતાપૂર્વક મેળવી',
+                default => 'Media list fetched successfully',
+            };
+            $media = Media::all();
+            return Util::getSuccessMessage(
+                $message,
+                $media
             );
         } catch (\Exception $e) {
             return Util::getErrorMessage($e->getMessage());

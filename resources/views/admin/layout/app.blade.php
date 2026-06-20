@@ -50,6 +50,11 @@
                             <i class="fas fa-image"></i> Banner
                         </a>
                     </li>
+                    <li>
+                        <a href="{{ route('admin.media.index') }}" class="{{ request()->routeIs('admin.media.index') ? 'active' : '' }}">
+                            <i class="fas fa-images"></i> Media
+                        </a>
+                    </li>
 
 
                 </ul>

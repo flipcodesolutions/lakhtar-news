@@ -426,6 +426,80 @@
             word-break: break-word;
         }
 
+        .library-media-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .library-media-card {
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            overflow: hidden;
+            background: #ffffff;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .library-media-card-preview {
+            height: 110px;
+            background: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 10px;
+        }
+
+        .library-media-card-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .library-media-card-preview a {
+            color: var(--primary-color);
+            font-size: 12px;
+            text-decoration: none;
+        }
+
+        .library-media-card-body {
+            padding: 10px;
+        }
+
+        .library-media-card-body strong,
+        .library-media-card-body small {
+            display: block;
+        }
+
+        .library-media-card-body strong {
+            font-size: 12px;
+            color: var(--text-dark);
+            margin-bottom: 4px;
+        }
+
+        .library-media-card-body small {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            word-break: break-word;
+        }
+
+        .library-media-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-dark);
+        }
+
+        .library-media-news {
+            margin-top: 6px;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
         .video-url-list {
             display: flex;
             flex-direction: column;
@@ -496,6 +570,9 @@
 
         @php
             $oldVideoUrls = old('video_urls', ['']);
+            $oldSelectedMediaIds = collect(old('selected_media_ids', $preselectedMediaIds ?? []))
+                ->map(fn($id) => (int) $id)
+                ->all();
             if (!is_array($oldVideoUrls) || $oldVideoUrls === []) {
                 $oldVideoUrls = [''];
             }
@@ -646,6 +723,42 @@
                         <h3 class="sidebar-card-title">
                             <i class="fas fa-image"></i> News Media
                         </h3>
+
+                        <div class="form-group">
+                            <label>Use From Media Library <span class="upload-optional">(Optional)</span></label>
+                            @if ($mediaLibrary->isNotEmpty())
+                                <div class="library-media-grid">
+                                    @foreach ($mediaLibrary as $libraryMedia)
+                                        <div class="library-media-card">
+                                            <div class="library-media-card-preview">
+                                                @if ($libraryMedia->media_type === 'image')
+                                                    <img src="{{ asset($libraryMedia->file_path) }}" alt="Library media">
+                                                @else
+                                                    <a href="{{ $libraryMedia->file_path }}" target="_blank" rel="noopener noreferrer">Open YouTube URL</a>
+                                                @endif
+                                            </div>
+                                            <div class="library-media-card-body">
+                                                <strong>{{ ucfirst($libraryMedia->media_type) }} #{{ $libraryMedia->id }}</strong>
+                                                <small>{{ $libraryMedia->file_path }}</small>
+                                                <label class="library-media-toggle">
+                                                    <input type="checkbox" name="selected_media_ids[]" value="{{ $libraryMedia->id }}" {{ in_array($libraryMedia->id, $oldSelectedMediaIds, true) ? 'checked' : '' }}>
+                                                    Use this media
+                                                </label>
+                                                <div class="library-media-news">Used in {{ $libraryMedia->news_count }} news</div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                <span class="upload-optional">No media available in library yet.</span>
+                            @endif
+                            @error('selected_media_ids')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
+                            @error('selected_media_ids.*')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
+                        </div>
 
                         <div class="form-group">
                             <label>News Images <span class="required-asterisk">*</span></label>

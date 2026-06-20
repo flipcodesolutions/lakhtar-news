@@ -38,10 +38,21 @@ class NewsController extends Controller
 
         return view('admin.news.index', compact('news'));
     }
-    public function create()
+    public function create(Request $request)
     {
         $categories = Category::where('status', 1)->get();
-        return view('admin.news.create', compact('categories'));
+        $mediaLibrary = $this->getMediaLibrary();
+        $preselectedMediaIds = collect($request->input('library_media', []))
+            ->when(! is_array($request->input('library_media')), function ($collection) use ($request) {
+                return $collection->push($request->input('library_media'));
+            })
+            ->map(fn($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        return view('admin.news.create', compact('categories', 'mediaLibrary', 'preselectedMediaIds'));
     }
 
     public function store(Request $request)
@@ -75,7 +86,9 @@ class NewsController extends Controller
     {
         $news = News::with('media')->find($id);
         $categories = Category::where('status', 1)->get();
-        return view('admin.news.edit', compact('news', 'categories'));
+        $mediaLibrary = $this->getMediaLibrary($news);
+
+        return view('admin.news.edit', compact('news', 'categories', 'mediaLibrary'));
     }
 
     public function update(Request $request)
@@ -196,6 +209,8 @@ class NewsController extends Controller
                     }
                 },
             ],
+            'selected_media_ids' => 'nullable|array',
+            'selected_media_ids.*' => 'integer|exists:media,id',
             'remove_media_ids' => 'nullable|array',
             'remove_media_ids.*' => 'integer',
             'news_type' => 'required|string|in:general,breaking,trending,live',
@@ -213,8 +228,14 @@ class NewsController extends Controller
             ->map(fn($id) => (int) $id)
             ->intersect($news?->media->pluck('id') ?? collect())
             ->count();
+        $selectedExistingCount = collect($request->input('selected_media_ids', []))
+            ->map(fn($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->diff($news?->media->pluck('id') ?? collect())
+            ->count();
 
-        if (($existingMediaCount - $removableIds + $newImageCount + $newVideoCount) <= 0) {
+        if (($existingMediaCount - $removableIds + $newImageCount + $newVideoCount + $selectedExistingCount) <= 0) {
             throw ValidationException::withMessages([
                 'images' => 'Add at least one image or YouTube video for this news.',
             ]);
@@ -223,6 +244,20 @@ class NewsController extends Controller
 
     private function attachMediaToNews(News $news, Request $request, int $sortOrder = 0): void
     {
+        $selectedMediaIds = collect($request->input('selected_media_ids', []))
+            ->map(fn($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($selectedMediaIds->isNotEmpty()) {
+            $alreadyAttachedIds = $news->media()->pluck('media.id');
+
+            foreach ($selectedMediaIds->diff($alreadyAttachedIds) as $mediaId) {
+                $news->media()->attach((int) $mediaId, ['sort_order' => $sortOrder++]);
+            }
+        }
+
         foreach ($request->file('images', []) as $image) {
             if (! $image) {
                 continue;
@@ -276,6 +311,10 @@ class NewsController extends Controller
         $news->media()->detach($mediaItems->pluck('id')->all());
 
         foreach ($mediaItems as $media) {
+            if ($media->news()->exists()) {
+                continue;
+            }
+
             if ($media->media_type === 'image' && $media->file_path) {
                 $absolutePath = public_path($media->file_path);
 
@@ -299,5 +338,16 @@ class NewsController extends Controller
             'youtu.be',
             'www.youtu.be',
         ], true);
+    }
+
+    private function getMediaLibrary(?News $news = null)
+    {
+        return Media::with(['news:id,title', 'uploader:id,name'])
+            ->withCount('news')
+            ->when($news, function ($query) use ($news) {
+                $query->whereDoesntHave('news', fn($newsQuery) => $newsQuery->where('news.id', $news->id));
+            })
+            ->orderByDesc('id')
+            ->get();
     }
 }

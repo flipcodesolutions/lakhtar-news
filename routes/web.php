@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\HomeController;
 use App\Http\Controllers\Admin\NewsController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\MediaController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -68,4 +69,11 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/banners/{id}/edit', [BannerController::class, 'edit'])->name('admin.banner.edit');
     Route::put('/banners/{id}', [BannerController::class, 'update'])->name('admin.banner.update');
     Route::get('/banners/{id}', [BannerController::class, 'destroy'])->name('admin.banner.destroy');
+
+    Route::get('/media', [MediaController::class, 'index'])->name('admin.media.index');
+    Route::get('/media/create', [MediaController::class, 'create'])->name('admin.media.create');
+    Route::post('/media', [MediaController::class, 'store'])->name('admin.media.store');
+    Route::get('/media/{id}/edit', [MediaController::class, 'edit'])->name('admin.media.edit');
+    Route::put('/media/{id}', [MediaController::class, 'update'])->name('admin.media.update');
+    Route::get('/media/{id}', [MediaController::class, 'destroy'])->name('admin.media.destroy');
 });

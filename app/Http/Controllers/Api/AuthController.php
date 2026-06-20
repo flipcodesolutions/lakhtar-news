@@ -1297,7 +1297,94 @@ class AuthController extends Controller
             return Util::getErrorMessage($e->getMessage());
         }
     }
-
+    /**
+     * @OA\Get(
+     *     path="/watch-histories",
+     *     summary="Get User Watch Histories",
+     *     description="Retrieve all watch histories for the authenticated user.",
+     *     operationId="getWatchHistories",
+     *     tags={"Watch Histories"},
+     *     security={{"bearerAuth":{}}},
+     *
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         required=true,
+     *         description="Page number",
+     *         @OA\Schema(
+     *             type="integer",
+     *             example=1
+     *         )
+     *     ),
+     *
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         required=true,
+     *         description="Number of records per page",
+     *         @OA\Schema(
+     *             type="integer",
+     *             example=10
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Watch histories retrieved successfully",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="status",
+     *                 type="boolean",
+     *                 example=true
+     *             ),
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="Watch histories retrieved successfully"
+     *             ),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(
+     *                         property="id",
+     *                         type="integer",
+     *                         example=1
+     *                     ),
+     *                     @OA\Property(
+     *                         property="user_id",
+     *                         type="integer",
+     *                         example=5
+     *                     ),
+     *                     @OA\Property(
+     *                         property="video_id",
+     *                         type="integer",
+     *                         example=12
+     *                     ),
+     *                     @OA\Property(
+     *                         property="watched_at",
+     *                         type="string",
+     *                         format="date-time",
+     *                         example="2026-06-20T10:30:00Z"
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation Error"
+     *     )
+     * )
+     */
     public function getWatchHistories(Request $request)
     {
         $language = Auth::user()->language ?? 'eng';
@@ -1319,6 +1406,62 @@ class AuthController extends Controller
         return Util::getSuccessMessage($message, $watchHistories);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/add-watch-history",
+     *     summary="Add Watch History",
+     *     description="Add a news item to the authenticated user's watch history.",
+     *     operationId="addWatchHistory",
+     *     tags={"Watch Histories"},
+     *     security={{"bearerAuth":{}}},
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"news_id"},
+     *             @OA\Property(
+     *                 property="news_id",
+     *                 type="integer",
+     *                 example=1,
+     *                 description="ID of the news item"
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Watch history successfully added",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="status",
+     *                 type="boolean",
+     *                 example=true
+     *             ),
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="Watch history successfully added"
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation Error"
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal Server Error"
+     *     )
+     * )
+     */
     public function addWatchHistory(Request $request)
     {
         try {
@@ -1334,6 +1477,86 @@ class AuthController extends Controller
             $user->watchHistories()->create([
                 'news_id' => $request->news_id,
             ]);
+
+            return Util::getSuccessMessage($message);
+        } catch (\Exception $e) {
+            return Util::getErrorMessage($e->getMessage());
+        }
+    }
+
+    /**
+     * @OA\Delete(
+     *     path="/remove-watch-history/{id}",
+     *     summary="Remove Watch History",
+     *     description="Remove a watch history record for the authenticated user.",
+     *     operationId="removeWatchHistory",
+     *     tags={"Watch Histories"},
+     *     security={{"bearerAuth":{}}},
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"id"},
+     *             @OA\Property(
+     *                 property="id",
+     *                 type="integer",
+     *                 example=1,
+     *                 description="Watch history ID"
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Watch history successfully removed",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="status",
+     *                 type="boolean",
+     *                 example=true
+     *             ),
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="Watch history successfully removed"
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation Error"
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal Server Error"
+     *     )
+     * )
+     */
+    public function removeWatchHistory(Request $request)
+    {
+        try {
+            $request->validate([
+                'id' => 'required|integer',
+            ]);
+
+            $language = Auth::user()->language ?? 'eng';
+
+            $message = match ($language) {
+                'hin' => 'वॉच हिस्ट्री हटा दिया गया।',
+                'guj' => 'જુઓ ઇતિહાસ સફળતાપૂર્વક દૂર કર્યા',
+                default => 'Watch history successfully removed',
+            };
+
+            $user = User::find(Auth::user()->id);
+            $user->watchHistories()->where('id', $request->id)->delete();
 
             return Util::getSuccessMessage($message);
         } catch (\Exception $e) {
