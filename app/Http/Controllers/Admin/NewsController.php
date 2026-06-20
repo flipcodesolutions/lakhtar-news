@@ -177,7 +177,14 @@ class NewsController extends Controller
             return redirect()->route('admin.reporter-news.index')->with('error', 'News not found.');
         }
 
+        request()->validate([
+            'reject_reason' => $status === 'rejected' ? 'required|string|max:1000' : 'nullable|string|max:1000',
+        ]);
+
         $news->status = $status;
+        $news->reject_reason = $status === 'rejected'
+            ? trim((string) request('reject_reason'))
+            : null;
         $news->save();
 
         return redirect()->route('admin.reporter-news.index')->with('success', 'News status updated successfully.');

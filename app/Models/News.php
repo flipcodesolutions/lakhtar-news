@@ -27,6 +27,7 @@ class News extends Model
         'total_views',
         'publish_date',
         'status',
+        'reject_reason',
     ];
 
     protected function casts(): array
@@ -36,6 +37,7 @@ class News extends Model
             'total_views' => 'integer',
             'publish_date' => 'datetime',
             'status' => 'string',
+            'reject_reason' => 'string',
         ];
     }
 

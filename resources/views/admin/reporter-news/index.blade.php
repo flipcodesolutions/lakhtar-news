@@ -380,6 +380,7 @@
             return [
                 'id' => $item->id,
                 'status' => $item->status,
+                'reject_reason' => $item->reject_reason,
                 'title' => $item->title,
                 'titleInHindi' => $item->titleInHindi,
                 'titleInGujarati' => $item->titleInGujarati,
@@ -543,6 +544,15 @@
                         ${renderMediaGallery(item.media)}
                     </div>
                 </div>
+
+                <div class="review-section">
+                    <h4>Reject Reason</h4>
+                    <div class="review-lang-block">
+                        <div class="review-description">
+                            ${item.reject_reason ? `<p>${escapeHtml(item.reject_reason)}</p>` : '<p class="review-empty">No reject reason added</p>'}
+                        </div>
+                    </div>
+                </div>
             `;
 
             const approveBtn = document.getElementById('approveNewsBtn');
@@ -591,6 +601,47 @@
                 return;
             }
 
+            if (options.requiresReason) {
+                Swal.fire({
+                    title: options.title,
+                    input: 'textarea',
+                    inputLabel: 'Reject reason',
+                    inputPlaceholder: 'Enter reject reason',
+                    inputValue: options.currentReason || '',
+                    inputAttributes: {
+                        'aria-label': 'Enter reject reason'
+                    },
+                    customClass: {
+                        container: 'reporter-review-swal',
+                    },
+                    showCancelButton: true,
+                    confirmButtonText: options.confirmButtonText,
+                    cancelButtonText: 'Cancel',
+                    confirmButtonColor: options.confirmButtonColor,
+                    cancelButtonColor: '#64748b',
+                    reverseButtons: true,
+                    inputValidator: (value) => {
+                        if (!value || !value.trim()) {
+                            return 'Reject reason is required.';
+                        }
+
+                        if (value.trim().length > 1000) {
+                            return 'Reject reason must not exceed 1000 characters.';
+                        }
+
+                        return null;
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const redirectUrl = new URL(targetUrl, window.location.origin);
+                        redirectUrl.searchParams.set('reject_reason', result.value.trim());
+                        window.location.href = redirectUrl.toString();
+                    }
+                });
+
+                return;
+            }
+
             Swal.fire({
                 title: options.title,
                 text: options.text,
@@ -622,12 +673,16 @@
         });
 
         document.getElementById('rejectNewsBtn').addEventListener('click', function(event) {
+            const item = reporterNewsItems.find(entry => entry.reject_url === this.getAttribute('href'));
+
             confirmStatusChange(event, {
                 title: 'Reject News?',
                 text: 'This reporter news will be rejected.',
                 icon: 'warning',
-                confirmButtonText: 'Yes, reject it',
+                confirmButtonText: 'Save reject reason',
                 confirmButtonColor: '#b7131a',
+                requiresReason: true,
+                currentReason: item?.reject_reason || '',
             });
         });
     </script>
