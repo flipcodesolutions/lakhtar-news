@@ -363,8 +363,8 @@ class ReporterController extends Controller
 
             $news = News::with('media')
                 ->where('id', $id)
-                ->where('user_id', Auth::id())
-                ->firstOrFail();
+                // ->where('user_id', Auth::id())
+                ->first();
 
             return Util::getSuccessMessage(
                 $message,
