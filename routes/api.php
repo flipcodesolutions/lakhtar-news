@@ -15,6 +15,7 @@ Route::post('/verify-otp', [AuthController::class, 'verifyOTP']);
 Route::post('/register', [AuthController::class, 'register']);
 
 Route::get('/categories', [HomeController::class, 'getCategories']);
+Route::get('/banners', [HomeController::class, 'getBanners']);
 
 Route::middleware('auth:sanctum')->group(function () {
 
@@ -36,9 +37,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/update-my-interest', [AuthController::class, 'updateMyInterest']);
     Route::get('/video-news', [HomeController::class, 'getVideoNews']);
     Route::get('/get-news/{slug}', [HomeController::class, 'getNewsBySlug']);
-
-    // banner
-    Route::get('/banners', [HomeController::class, 'getBanners']);
 
     // bookmark
     Route::get('/my-bookmarks', [AuthController::class, 'getMyBookmarks']);

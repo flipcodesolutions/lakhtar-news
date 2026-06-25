@@ -2478,6 +2478,199 @@
                 ]
             }
         },
+        "/get-category-news/{id}": {
+            "get": {
+                "tags": [
+                    "News"
+                ],
+                "summary": "Get category news",
+                "description": "Fetch category details along with all associated news and media based on the authenticated user's selected language.",
+                "operationId": "ad0244382c0e314fe5292f6beab0efb2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Category ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Category news fetched successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Category news fetched successfully."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "category": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Sports"
+                                                        },
+                                                        "description": {
+                                                            "type": "string",
+                                                            "example": "Latest sports news"
+                                                        },
+                                                        "news": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 10
+                                                                    },
+                                                                    "slug": {
+                                                                        "type": "string",
+                                                                        "example": "india-wins-final"
+                                                                    },
+                                                                    "title": {
+                                                                        "type": "string",
+                                                                        "example": "India Wins Final"
+                                                                    },
+                                                                    "description": {
+                                                                        "type": "string",
+                                                                        "example": "India secured a historic victory."
+                                                                    },
+                                                                    "image": {
+                                                                        "type": "string",
+                                                                        "example": "uploads/news/image.jpg"
+                                                                    },
+                                                                    "video": {
+                                                                        "type": "string",
+                                                                        "example": "uploads/news/video.mp4",
+                                                                        "nullable": true
+                                                                    },
+                                                                    "media": {
+                                                                        "type": "array",
+                                                                        "items": {
+                                                                            "properties": {
+                                                                                "id": {
+                                                                                    "type": "integer",
+                                                                                    "example": 1
+                                                                                },
+                                                                                "media_type": {
+                                                                                    "type": "string",
+                                                                                    "example": "image"
+                                                                                },
+                                                                                "file_path": {
+                                                                                    "type": "string",
+                                                                                    "example": "uploads/media/image.jpg"
+                                                                                },
+                                                                                "thumbnail": {
+                                                                                    "type": "string",
+                                                                                    "example": "uploads/media/thumb.jpg",
+                                                                                    "nullable": true
+                                                                                },
+                                                                                "caption": {
+                                                                                    "type": "string",
+                                                                                    "example": "Match Celebration",
+                                                                                    "nullable": true
+                                                                                },
+                                                                                "sort_order": {
+                                                                                    "type": "integer",
+                                                                                    "example": 1,
+                                                                                    "nullable": true
+                                                                                }
+                                                                            },
+                                                                            "type": "object"
+                                                                        }
+                                                                    },
+                                                                    "publish_date": {
+                                                                        "type": "string",
+                                                                        "format": "date",
+                                                                        "example": "2026-06-25"
+                                                                    },
+                                                                    "news_type": {
+                                                                        "type": "string",
+                                                                        "example": "breaking"
+                                                                    },
+                                                                    "created_at": {
+                                                                        "type": "string",
+                                                                        "format": "date-time",
+                                                                        "example": "2026-06-25T10:30:00Z"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Category not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Category not found."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Something went wrong."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/banners": {
             "get": {
                 "tags": [
@@ -2857,7 +3050,7 @@
                 },
                 "security": [
                     {
-                        "bearerAuth": []
+                        "sanctum": []
                     }
                 ]
             }
@@ -3442,7 +3635,7 @@
                 },
                 "security": [
                     {
-                        "bearerAuth": []
+                        "sanctum": []
                     }
                 ]
             }

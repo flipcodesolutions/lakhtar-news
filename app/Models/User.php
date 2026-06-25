@@ -85,4 +85,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(WatchHistory::class);
     }
+
+    public function userBookmarks()
+    {
+        return $this->hasMany(UserBookmark::class);
+    }
 }

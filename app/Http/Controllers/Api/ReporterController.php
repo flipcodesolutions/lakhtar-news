@@ -282,7 +282,7 @@ class ReporterController extends Controller
      *     description="Retrieve details of a specific news item created by the authenticated reporter, including associated media.",
      *     operationId="getMyNewsDetails",
      *     tags={"Reporter News"},
-     *     security={{"bearerAuth":{}}},
+     *     security={{"sanctum":{}}},
      *
      *     @OA\Parameter(
      *         name="id",
@@ -885,26 +885,72 @@ class ReporterController extends Controller
             'descriptionInHindi' => 'required|string',
             'titleInGujarati' => 'required|string|max:255',
             'descriptionInGujarati' => 'required|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'image' => [
+                'nullable',
+                function ($attribute, $value, $fail) use ($request) {
+                    $file = $request->file('image');
+
+                    if (! $file) {
+                        return;
+                    }
+
+                    $validator = Validator::make(
+                        ['file' => $file],
+                        ['file' => 'file|max:5120']
+                    );
+
+                    if ($validator->fails()) {
+                        $fail($validator->errors()->first('file'));
+                    }
+                },
+            ],
             'images' => [
                 'nullable',
                 function ($attribute, $value, $fail) use ($request) {
                     $files = $this->extractUploadedImages($request);
 
-                    if (count($files) === 1) {
+                    foreach ($files as $file) {
                         $validator = Validator::make(
-                            ['file' => $files[0]],
-                            ['file' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048']
+                            ['file' => $file],
+                            ['file' => 'file|max:5120']
                         );
 
                         if ($validator->fails()) {
                             $fail($validator->errors()->first('file'));
+                            return;
                         }
                     }
                 },
             ],
-            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-            'video' => 'nullable|url',
+            'video' => [
+                'nullable',
+                function ($attribute, $value, $fail) {
+                    if (blank(trim((string) $value))) {
+                        return;
+                    }
+
+                    $videoValues = $this->normalizeVideoUrls($value);
+                    if ($videoValues === []) {
+                        $videoValues = $this->normalizeMediaReferences($value);
+                    }
+
+                    foreach ($videoValues as $videoValue) {
+                        if ($this->resolveExistingMediaId($videoValue, 'video') !== null) {
+                            continue;
+                        }
+
+                        if (! filter_var($videoValue, FILTER_VALIDATE_URL)) {
+                            $fail('The video field must be a valid YouTube URL or existing media reference.');
+                            return;
+                        }
+
+                        if (! $this->isYoutubeUrl($videoValue)) {
+                            $fail('Only YouTube video URLs are allowed.');
+                            return;
+                        }
+                    }
+                },
+            ],
             'video_urls' => [
                 'nullable',
                 function ($attribute, $value, $fail) {
@@ -919,8 +965,12 @@ class ReporterController extends Controller
                         }
 
                         foreach ($urls as $url) {
+                            if ($this->resolveExistingMediaId($url, 'video') !== null) {
+                                continue;
+                            }
+
                             if (! filter_var($url, FILTER_VALIDATE_URL)) {
-                                $fail('The video urls field must be a valid URL.');
+                                $fail('The video urls field must be a valid YouTube URL or existing media reference.');
                                 return;
                             }
 
@@ -946,6 +996,10 @@ class ReporterController extends Controller
                         return;
                     }
 
+                    if ($this->resolveExistingMediaId((string) $value, 'video') !== null) {
+                        return;
+                    }
+
                     if (! $this->isYoutubeUrl((string) $value)) {
                         $fail('Only YouTube video URLs are allowed.');
                     }
@@ -958,35 +1012,32 @@ class ReporterController extends Controller
             'publish_date' => 'required|date',
         ]);
 
-        $newImages = collect($this->extractUploadedImages($request))->filter();
-        $singleImage = $request->file('image');
-        if ($singleImage) {
-            $newImages->push($singleImage);
-        }
-        $newImageCount = $newImages->count();
+        $invalidImageReferences = collect($this->extractImageReferences($request))
+            ->filter(fn($reference) => $this->resolveExistingMediaId($reference, 'image') === null)
+            ->values();
 
-        $videoUrls = collect($this->extractVideoUrls($request));
-        $singleVideo = trim((string) $request->input('video', ''));
-        if ($singleVideo !== '') {
-            $videoUrls->push($singleVideo);
-        }
-        $newVideoCount = $videoUrls->count();
-
-        $existingMediaCount = $news?->media->count() ?? 0;
-        $removableIds = collect($request->input('remove_media_ids', []))
-            ->map(fn($id) => (int) $id)
-            ->intersect($news?->media->pluck('id') ?? collect())
-            ->count();
-
-        if (($existingMediaCount - $removableIds + $newImageCount + $newVideoCount) <= 0) {
+        if ($invalidImageReferences->isNotEmpty()) {
             throw ValidationException::withMessages([
-                'images' => 'Add at least one image or YouTube video for this news.',
+                'images' => 'The selected existing image media is invalid.',
             ]);
         }
     }
 
     private function attachMediaToNews(News $news, Request $request, int $sortOrder = 0): void
     {
+        $alreadyAttachedIds = collect($news->media()->pluck('media.id')->all());
+
+        $existingImageIds = collect($this->extractImageReferences($request))
+            ->map(fn($reference) => $this->resolveExistingMediaId($reference, 'image'))
+            ->filter()
+            ->unique()
+            ->values();
+
+        foreach ($existingImageIds->diff($alreadyAttachedIds) as $mediaId) {
+            $news->media()->attach((int) $mediaId, ['sort_order' => $sortOrder++]);
+            $alreadyAttachedIds->push((int) $mediaId);
+        }
+
         $images = collect($this->extractUploadedImages($request))->filter();
         $singleImage = $request->file('image');
         if ($singleImage) {
@@ -1024,6 +1075,16 @@ class ReporterController extends Controller
             $videoUrl = trim((string) $videoUrl);
 
             if ($videoUrl === '') {
+                continue;
+            }
+
+            $existingVideoMediaId = $this->resolveExistingMediaId($videoUrl, 'video');
+            if ($existingVideoMediaId !== null) {
+                if (! $alreadyAttachedIds->contains($existingVideoMediaId)) {
+                    $news->media()->attach($existingVideoMediaId, ['sort_order' => $sortOrder++]);
+                    $alreadyAttachedIds->push($existingVideoMediaId);
+                }
+
                 continue;
             }
 
@@ -1086,6 +1147,16 @@ class ReporterController extends Controller
         )));
     }
 
+    private function extractImageReferences(Request $request): array
+    {
+        return array_values(array_unique(array_filter(array_merge(
+            $this->normalizeMediaReferences($request->input('image')),
+            $this->normalizeMediaReferences($request->input('images')),
+            $this->normalizeMediaReferences($request->input('images[]')),
+            $this->normalizeMediaReferences($request->all()['images[]'] ?? null)
+        ), fn($item) => filled(trim((string) $item)))));
+    }
+
     private function extractVideoUrls(Request $request): array
     {
         $urls = array_values(array_filter(array_merge(
@@ -1108,6 +1179,49 @@ class ReporterController extends Controller
         }
 
         return [];
+    }
+
+    private function normalizeMediaReferences(mixed $value): array
+    {
+        if ($value instanceof UploadedFile) {
+            return [];
+        }
+
+        if (is_array($value)) {
+            $parts = [];
+
+            foreach ($value as $item) {
+                $parts = array_merge($parts, $this->normalizeMediaReferences($item));
+            }
+
+            return array_values(array_filter($parts, fn($item) => filled(trim((string) $item))));
+        }
+
+        if (! is_string($value)) {
+            return [];
+        }
+
+        $value = trim(str_replace("\r", "\n", $value));
+        if ($value === '') {
+            return [];
+        }
+
+        $parts = [];
+        foreach (explode("\n", $value) as $line) {
+            $line = trim($line);
+            if ($line === '') {
+                continue;
+            }
+
+            foreach (preg_split('/\s*,\s*/', $line) as $segment) {
+                $segment = trim($segment);
+                if ($segment !== '') {
+                    $parts[] = $segment;
+                }
+            }
+        }
+
+        return $parts;
     }
 
     private function normalizeVideoUrls(mixed $value): array
@@ -1153,6 +1267,39 @@ class ReporterController extends Controller
         }
 
         return $parts;
+    }
+
+    private function resolveExistingMediaId(string $reference, string $mediaType): ?int
+    {
+        $reference = trim($reference);
+        if ($reference === '') {
+            return null;
+        }
+
+        $query = Media::query()->where('media_type', $mediaType);
+
+        if (ctype_digit($reference)) {
+            return $query->where('id', (int) $reference)->value('id');
+        }
+
+        $normalizedPath = $this->normalizeMediaPathReference($reference);
+
+        return $query
+            ->where(function ($subQuery) use ($reference, $normalizedPath) {
+                $subQuery->where('file_path', $reference);
+
+                if ($normalizedPath !== $reference) {
+                    $subQuery->orWhere('file_path', $normalizedPath);
+                }
+            })
+            ->value('id');
+    }
+
+    private function normalizeMediaPathReference(string $reference): string
+    {
+        $path = parse_url($reference, PHP_URL_PATH);
+
+        return $path ? ltrim($path, '/') : $reference;
     }
 
     private function generateUniqueSlug(string $title, ?int $ignoreNewsId = null): string
@@ -1330,7 +1477,7 @@ class ReporterController extends Controller
      *     description="Retrieve a list of all media records.",
      *     operationId="getAllMedia",
      *     tags={"Media"},
-     *     security={{"bearerAuth":{}}},
+     *     security={{"sanctum":{}}},
      *
      *     @OA\Response(
      *         response=200,

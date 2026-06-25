@@ -15,4 +15,9 @@ class UserBookmark extends Model
     {
         return $this->belongsTo(News::class, 'news_id');
     }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

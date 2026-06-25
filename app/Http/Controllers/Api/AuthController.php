@@ -1173,13 +1173,18 @@ class AuthController extends Controller
 
         try {
             $request->validate([
-                'news_id' => 'required|integer',
+                'news_id' => 'required|integer|exists:news,id',
             ]);
 
-            $user = User::find(Auth::user()->id);
-            $user->userBookmarks()->create([
+            $user = Auth::user();
+
+            $bookmark = $user->userBookmarks()->firstOrCreate([
                 'news_id' => $request->news_id,
             ]);
+
+            if (! $bookmark->wasRecentlyCreated) {
+                return Util::getSuccessMessage('News already bookmarked');
+            }
 
             return Util::getSuccessMessage($message);
         } catch (\Exception $e) {
@@ -1274,13 +1279,9 @@ class AuthController extends Controller
      *     )
      * )
      */
-    public function removeBookmarkNews(Request $request)
+    public function removeBookmarkNews($id)
     {
         try {
-            $request->validate([
-                'news_id' => 'required|integer',
-            ]);
-
             $language = Auth::user()->language ?? 'eng';
 
             $message = match ($language) {
@@ -1289,8 +1290,11 @@ class AuthController extends Controller
                 default => 'News bookmark successfully removed',
             };
 
-            $user = User::find(Auth::user()->id);
-            $user->userBookmarks()->where('news_id', $request->news_id)->delete();
+            $deleted = Auth::user()->userBookmarks()->where('news_id', $id)->delete();
+
+            if (! $deleted) {
+                return Util::getErrorMessage('Bookmark not found.');
+            }
 
             return Util::getSuccessMessage($message);
         } catch (\Exception $e) {

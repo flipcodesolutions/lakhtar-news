@@ -992,6 +992,98 @@ class HomeController extends Controller
         }
     }
 
+    /**
+     * @OA\Get(
+ *     path="/get-category-news/{id}",
+     *     summary="Get category news",
+     *     description="Fetch category details along with all associated news and media based on the authenticated user's selected language.",
+     *     tags={"News"},
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Category ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Category news fetched successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="success",
+     *                 type="boolean",
+     *                 example=true
+     *             ),
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="Category news fetched successfully."
+     *             ),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="category",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Sports"),
+     *                     @OA\Property(property="description", type="string", example="Latest sports news"),
+     *                     @OA\Property(
+     *                         property="news",
+     *                         type="array",
+     *                         @OA\Items(
+     *                             type="object",
+     *                             @OA\Property(property="id", type="integer", example=10),
+     *                             @OA\Property(property="slug", type="string", example="india-wins-final"),
+     *                             @OA\Property(property="title", type="string", example="India Wins Final"),
+     *                             @OA\Property(property="description", type="string", example="India secured a historic victory."),
+     *                             @OA\Property(property="image", type="string", example="uploads/news/image.jpg"),
+     *                             @OA\Property(property="video", type="string", nullable=true, example="uploads/news/video.mp4"),
+     *                             @OA\Property(
+     *                                 property="media",
+     *                                 type="array",
+     *                                 @OA\Items(
+     *                                     type="object",
+     *                                     @OA\Property(property="id", type="integer", example=1),
+     *                                     @OA\Property(property="media_type", type="string", example="image"),
+     *                                     @OA\Property(property="file_path", type="string", example="uploads/media/image.jpg"),
+     *                                     @OA\Property(property="thumbnail", type="string", nullable=true, example="uploads/media/thumb.jpg"),
+     *                                     @OA\Property(property="caption", type="string", nullable=true, example="Match Celebration"),
+     *                                     @OA\Property(property="sort_order", type="integer", nullable=true, example=1)
+     *                                 )
+     *                             ),
+     *                             @OA\Property(property="publish_date", type="string", format="date", example="2026-06-25"),
+     *                             @OA\Property(property="news_type", type="string", example="breaking"),
+     *                             @OA\Property(property="created_at", type="string", format="date-time", example="2026-06-25T10:30:00Z")
+     *                         )
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=404,
+     *         description="Category not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Category not found.")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Something went wrong.")
+     *         )
+     *     )
+     * )
+     */
     public function getCategoryNews(Request $request, $id)
     {
         try {
@@ -1186,7 +1278,12 @@ class HomeController extends Controller
     public function getBanners()
     {
         try {
-            $banners = Banner::orderByDesc('id')->where('start_date', '<=', now())->where('end_date', '>=', now())->where('is_active', 1)->get();
+            $banners = Banner::query()
+                ->where('status', true)
+                ->whereDate('start_date', '<=', now())
+                ->whereDate('end_date', '>=', now())
+                ->orderByDesc('id')
+                ->get();
 
             return Util::getSuccessMessage(
                 'Banners fetched successfully.',
