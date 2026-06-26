@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\News;
+use App\Models\TopReporter;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -147,5 +148,49 @@ class HomeController extends Controller
         $user->save();
 
         return redirect()->route('admin.profile')->with('success', 'Profile updated successfully.');
+    }
+    public function topReporters()
+    {
+        $topReporters = TopReporter::with('user')->get();
+        $reporters = User::where('role', 'reporter')->withCount('news')->get();
+
+        $today = now()->format('Y-m-d');
+        $activeTopReporter = TopReporter::with('user')
+            ->where('status', 'active')
+            ->where('start_date', '<=', $today)
+            ->where('end_date', '>=', $today)
+            ->latest()
+            ->first();
+
+        return view('admin.top-reporters.index', compact('topReporters', 'reporters', 'activeTopReporter'));
+    }
+
+    public function storeTopReporter(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+        ]);
+
+        // Deactivate other active top reporters
+        TopReporter::where('status', 'active')->update(['status' => 'inactive']);
+
+        TopReporter::create([
+            'user_id' => $request->user_id,
+            'start_date' => $request->start_date,
+            'end_date' => $request->end_date,
+            'status' => 'active',
+        ]);
+
+        return redirect()->back()->with('success', 'Reporter promoted to Top Reporter successfully.');
+    }
+
+    public function destroyTopReporter($id)
+    {
+        $topReporter = TopReporter::findOrFail($id);
+        $topReporter->delete();
+
+        return redirect()->back()->with('success', 'Top Reporter removed successfully.');
     }
 }

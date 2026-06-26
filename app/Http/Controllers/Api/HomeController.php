@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Banner;
 use App\Models\Category;
 use App\Models\News;
+use App\Models\TopReporter;
 use App\Utils\Util;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -205,7 +206,7 @@ class HomeController extends Controller
      */
     public function getBreakingNews(Request $request)
     {
-        $language = Auth::user()?->language ?? 'eng';
+        $language = Auth::user()?->language ?? 'guj';
 
         $titleColumn = match ($language) {
             'hin' => 'titleInHindi',
@@ -358,7 +359,7 @@ class HomeController extends Controller
      */
     public function getTrendingNews(Request $request)
     {
-        $language = Auth::user()?->language ?? 'eng';
+        $language = Auth::user()?->language ?? 'guj';
 
         $titleColumn = match ($language) {
             'hin' => 'titleInHindi',
@@ -525,7 +526,7 @@ class HomeController extends Controller
      */
     public function getNewsDetails(Request $request, $id)
     {
-        $language = Auth::user()?->language ?? 'eng';
+        $language = Auth::user()?->language ?? 'guj';
 
         $titleColumn = match ($language) {
             'hin' => 'titleInHindi',
@@ -706,7 +707,7 @@ class HomeController extends Controller
     {
         try {
 
-            $language = Auth::user()?->language ?? 'eng';
+            $language = Auth::user()?->language ?? 'guj';
 
             $titleColumn = match ($language) {
                 'hin' => 'titleInHindi',
@@ -919,7 +920,7 @@ class HomeController extends Controller
     {
         try {
 
-            $language = Auth::user()?->language ?? 'eng';
+            $language = Auth::user()?->language ?? 'guj';
 
             $titleColumn = match ($language) {
                 'hin' => 'titleInHindi',
@@ -994,7 +995,7 @@ class HomeController extends Controller
 
     /**
      * @OA\Get(
- *     path="/get-category-news/{id}",
+     *     path="/get-category-news/{id}",
      *     summary="Get category news",
      *     description="Fetch category details along with all associated news and media based on the authenticated user's selected language.",
      *     tags={"News"},
@@ -1087,7 +1088,7 @@ class HomeController extends Controller
     public function getCategoryNews(Request $request, $id)
     {
         try {
-            $language = Auth::user()?->language ?? 'eng';
+            $language = Auth::user()?->language ?? 'guj';
 
             $categoryColumn = match ($language) {
                 'hin' => 'nameInHindi',
@@ -1290,6 +1291,22 @@ class HomeController extends Controller
                 [
                     'banners' => $banners
                 ]
+            );
+        } catch (\Exception $e) {
+            return Util::getErrorMessage($e->getMessage());
+        }
+    }
+
+    public function getTopReporters()
+    {
+        try {
+            $reporter = TopReporter::with('user')
+                ->where('status', 'active')
+                ->first();
+
+            return Util::getSuccessMessage(
+                'Top reporters fetched successfully.',
+                $reporter
             );
         } catch (\Exception $e) {
             return Util::getErrorMessage($e->getMessage());

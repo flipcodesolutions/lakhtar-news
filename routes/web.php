@@ -76,4 +76,9 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/media/{id}/edit', [MediaController::class, 'edit'])->name('admin.media.edit');
     Route::put('/media/{id}', [MediaController::class, 'update'])->name('admin.media.update');
     Route::get('/media/{id}', [MediaController::class, 'destroy'])->name('admin.media.destroy');
+
+    // top reporter routes
+    Route::get('/top-reporters', [HomeController::class, 'topReporters'])->name('admin.top-reporters.index');
+    Route::post('/top-reporters/store', [HomeController::class, 'storeTopReporter'])->name('admin.top-reporters.store');
+    Route::get('/top-reporters/delete/{id}', [HomeController::class, 'destroyTopReporter'])->name('admin.top-reporters.destroy');
 });

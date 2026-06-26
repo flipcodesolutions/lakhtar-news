@@ -782,7 +782,7 @@ class AuthController extends Controller
     {
         try {
 
-            $language = Auth::user()?->language ?? 'eng';
+            $language = Auth::user()?->language ?? 'guj';
 
             $message = match ($language) {
                 'hin' => 'मेरी रुचि सफलतापूर्वक प्राप्त हो गया।',

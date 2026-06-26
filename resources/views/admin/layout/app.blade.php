@@ -55,8 +55,11 @@
                             <i class="fas fa-images"></i> Media
                         </a>
                     </li>
-
-
+                    <li>
+                        <a href="{{ route('admin.top-reporters.index') }}" class="{{ request()->routeIs('admin.top-reporters.index') ? 'active' : '' }}">
+                            <i class="fas fa-crown"></i> Top Reporters
+                        </a>
+                    </li>
                 </ul>
             </div>
         </aside>

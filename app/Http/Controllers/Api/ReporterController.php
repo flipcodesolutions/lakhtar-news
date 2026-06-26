@@ -211,7 +211,7 @@ class ReporterController extends Controller
     {
         try {
 
-            $language = Auth::user()?->language ?? 'eng';
+            $language = Auth::user()?->language ?? 'guj';
 
             $titleColumn = match ($language) {
                 'hin' => 'titleInHindi',
@@ -508,7 +508,7 @@ class ReporterController extends Controller
 
     public function createNews(Request $request)
     {
-        $language = Auth::user()?->language ?? 'eng';
+        $language = Auth::user()?->language ?? 'guj';
         $message = match ($language) {
             'hin' => 'रिपोर्टर न्यूज़ सफलतापूर्वक बनाई गई।',
             'guj' => 'રિપોર્ટર સમાચાર સફળતાપૂર્વક બનાવવામાં આવ્યા',
@@ -727,7 +727,7 @@ class ReporterController extends Controller
         if (! $news) {
             return Util::getErrorMessage('News not found');
         }
-        $language = Auth::user()?->language ?? 'eng';
+        $language = Auth::user()?->language ?? 'guj';
         $message = match ($language) {
             'hin' => 'रिपोर्टर की खबर सफलतापूर्वक अपडेट हो गई।',
             'guj' => 'રિપોર્ટર સમાચાર સફળતાપૂર્વક અપડેટ થયા',
@@ -858,7 +858,7 @@ class ReporterController extends Controller
     public function deleteNews($id)
     {
         $userId = Auth::user()->id;
-        $language = Auth::user()?->language ?? 'eng';
+        $language = Auth::user()?->language ?? 'guj';
 
         $message = match ($language) {
             'hin' => 'रिपोर्टर न्यूज़ सफलतापूर्वक हटा दी गई।',
@@ -1432,7 +1432,7 @@ class ReporterController extends Controller
     {
         try {
 
-            $language = Auth::user()?->language ?? 'eng';
+            $language = Auth::user()?->language ?? 'guj';
 
             $total_news = News::where('user_id', Auth::id())->count();
 

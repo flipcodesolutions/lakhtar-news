@@ -59,4 +59,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/my-dashboard-stat', [ReporterController::class, 'dashboardStat']);
 
     Route::get('/media', [ReporterController::class, 'getAllMedia']);
+
 });
+Route::get('/top-reporter', [HomeController::class, 'getTopReporters']);
