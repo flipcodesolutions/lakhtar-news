@@ -11,7 +11,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -495,37 +497,46 @@ class AuthController extends Controller
      *     security={{"sanctum": {}}},
      *     @OA\RequestBody(
      *         required=true,
-     *         @OA\JsonContent(
-     *             required={"name", "email", "language", "password","mobile"},
-     *             @OA\Property(
-     *                 property="mobile",
-     *                 type="string",
-     *                 description="10-digit mobile number",
-     *                 example="9876543210"
-     *             ),
-     *             @OA\Property(
-     *                 property="name",
-     *                 type="string",
-     *                 description="User name",
-     *                 example="John Doe"
-     *             ),
-     *             @OA\Property(
-     *                 property="email",
-     *                 type="string",
-     *                 description="User email",
-     *                 example="john.doe@example.com"
-     *             ),
-     *             @OA\Property(
-     *                 property="language",
-     *                 type="string",
-     *                 description="User language",
-     *                 example="en"
-     *             ),
-     *             @OA\Property(
-     *                 property="password",
-     *                 type="string",
-     *                 description="User password",
-     *                 example="123456"
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"name", "email", "language", "password","mobile"},
+     *                 @OA\Property(
+     *                     property="mobile",
+     *                     type="string",
+     *                     description="10-digit mobile number",
+     *                     example="9876543210"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="name",
+     *                     type="string",
+     *                     description="User name",
+     *                     example="John Doe"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="email",
+     *                     type="string",
+     *                     description="User email",
+     *                     example="john.doe@example.com"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="language",
+     *                     type="string",
+     *                     description="User language",
+     *                     example="en"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="password",
+     *                     type="string",
+     *                     description="User password",
+     *                     example="123456"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="profile_image",
+     *                     type="string",
+     *                     format="binary",
+     *                     description="Profile image file (jpeg, png, jpg, gif, webp - max 2MB)"
+     *                 )
      *             )
      *         )
      *     ),
@@ -579,7 +590,7 @@ class AuthController extends Controller
                 'name' => 'required|string|max:255',
                 'email' => 'required|string|email|max:255',
                 'language' => 'required|string|max:255',
-                'password' => 'required|string|min:6',
+                'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             ]);
 
             $message = match ($request->language) {
@@ -588,31 +599,38 @@ class AuthController extends Controller
                 default => 'Profile updated successfully',
             };
 
-
-
             $user = User::where('mobile', $request->mobile)->first();
 
             if (!$user) {
                 $user = new User();
                 $user->mobile = $request->mobile;
-                $user->name = $request->name;
-                $user->email = $request->email;
-                $user->language = $request->language;
                 $user->role = 'user';
                 $user->password = Hash::make($request->password);
-                $user->save();
-                return Util::getSuccessMessage($message, [
-                    'user' => $user
-                ]);
-            } else {
-                $user->name = $request->name;
-                $user->email = $request->email;
-                $user->language = $request->language;
-                $user->save();
-                return Util::getSuccessMessage($message, [
-                    'user' => $user
-                ]);
             }
+
+            $user->name = $request->name;
+            $user->email = $request->email;
+            $user->language = $request->language;
+
+            if ($request->hasFile('profile_image')) {
+                if ($user->profile_image) {
+                    $oldPath = public_path($user->profile_image);
+                    if (File::exists($oldPath)) {
+                        File::delete($oldPath);
+                    }
+                }
+
+                $profileImage = $request->file('profile_image');
+                $profileImageName = time() . '_' . Str::random(10) . '.' . $profileImage->getClientOriginalExtension();
+                $profileImage->move(public_path('profile'), $profileImageName);
+                $user->profile_image = 'profile/' . $profileImageName;
+            }
+
+            $user->save();
+
+            return Util::getSuccessMessage($message, [
+                'user' => $user
+            ]);
         } catch (\Exception $e) {
             return Util::getErrorMessage($e->getMessage());
         }
@@ -921,7 +939,7 @@ class AuthController extends Controller
             ]);
 
             $user = User::find(Auth::user()->id);
-            $user->userFavoriteCategories()->sync($request->categories);
+            $user->favoriteCategories()->sync($request->categories);
 
             return Util::getSuccessMessage('My interest updated successfully');
         } catch (\Exception $e) {
@@ -1064,7 +1082,7 @@ class AuthController extends Controller
             default => 'My bookmarks',
         };
         try {
-            $bookmarks = UserBookmark::where('user_id', Auth::id())->with('news')->get();
+            $bookmarks = UserBookmark::where('user_id', Auth::id())->with('news')->orderBy('id', 'desc')->get();
 
             return Util::getSuccessMessage($message, [
                 'bookmarks' => $bookmarks
@@ -1290,7 +1308,12 @@ class AuthController extends Controller
                 default => 'News bookmark successfully removed',
             };
 
-            $deleted = Auth::user()->userBookmarks()->where('news_id', $id)->delete();
+            $deleted = Auth::user()->userBookmarks()
+                ->where(function ($query) use ($id) {
+                    $query->where('news_id', $id)
+                        ->orWhere('id', $id);
+                })
+                ->delete();
 
             if (! $deleted) {
                 return Util::getErrorMessage('Bookmark not found.');
@@ -1478,7 +1501,7 @@ class AuthController extends Controller
             };
 
             $user = User::find(Auth::user()->id);
-            $user->watchHistories()->create([
+            $user->watchHistories()->firstOrCreate([
                 'news_id' => $request->news_id,
             ]);
 
@@ -1544,12 +1567,9 @@ class AuthController extends Controller
      *     )
      * )
      */
-    public function removeWatchHistory(Request $request)
+    public function removeWatchHistory($id)
     {
         try {
-            $request->validate([
-                'id' => 'required|integer',
-            ]);
 
             $language = Auth::user()->language ?? 'eng';
 
@@ -1559,9 +1579,30 @@ class AuthController extends Controller
                 default => 'Watch history successfully removed',
             };
 
-            $user = User::find(Auth::user()->id);
-            $user->watchHistories()->where('id', $request->id)->delete();
+            $deleted = Auth::user()->watchHistories()->where('id', $id)->delete();
 
+            if (! $deleted) {
+                return Util::getErrorMessage('Watch history not found.');
+            }
+
+            return Util::getSuccessMessage($message);
+        } catch (\Exception $e) {
+            return Util::getErrorMessage($e->getMessage());
+        }
+    }
+
+    public function removeAllWatchHistories()
+    {
+        try {
+            $language = Auth::user()->language ?? 'eng';
+
+            $message = match ($language) {
+                'hin' => 'सभी वॉच हिस्ट्री सफलतापूर्वक हटा दिया गया।',
+                'guj' => 'સભેલ જુઓ ઇતિહાસ સફળતાપૂર્વક દૂર કર્યા',
+                default => 'All watch histories removed successfully',
+            };
+
+            Auth::user()->watchHistories()->delete();
             return Util::getSuccessMessage($message);
         } catch (\Exception $e) {
             return Util::getErrorMessage($e->getMessage());

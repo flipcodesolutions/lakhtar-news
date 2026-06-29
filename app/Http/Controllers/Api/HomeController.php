@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Banner;
 use App\Models\Category;
+use App\Models\Like;
 use App\Models\News;
 use App\Models\TopReporter;
 use App\Utils\Util;
@@ -227,10 +228,13 @@ class HomeController extends Controller
         ];
 
         $news = News::with(['category', 'user', 'media'])
+            ->withCount(['likes', 'comments' => fn($query) => $query->where('is_approved', true)])
             ->where('news_type', 'breaking')
             ->latest()
             ->get()
             ->map(function ($item) use ($titleColumn, $descriptionColumn) {
+                $isLiked = Like::where('user_id', Auth::id())->where('news_id', $item->id)->first();
+                $isLiked = $isLiked ? true : false;
                 return [
                     'id' => $item->id,
                     'category_id' => $item->category_id,
@@ -253,6 +257,9 @@ class HomeController extends Controller
                     'news_type' => $item->news_type,
                     'is_featured' => $item->is_featured,
                     'total_views' => $item->total_views,
+                    'likes_count' => $item->likes_count,
+                    'comments_count' => $item->comments_count,
+                    'is_liked' => $isLiked,
                     'publish_date' => $item->publish_date,
                     'status' => $item->status,
                     'created_at' => $item->created_at,
@@ -380,10 +387,13 @@ class HomeController extends Controller
         ];
 
         $news = News::with(['category', 'user', 'media'])
+            ->withCount(['likes', 'comments' => fn($query) => $query->where('is_approved', true)])
             ->where('total_views', '>', 100)
             ->latest()
             ->get()
             ->map(function ($item) use ($titleColumn, $descriptionColumn) {
+                $isLiked = Like::where('user_id', Auth::id())->where('news_id', $item->id)->first();
+                $isLiked = $isLiked ? true : false;
                 return [
                     'id' => $item->id,
                     'category_id' => $item->category_id,
@@ -406,6 +416,9 @@ class HomeController extends Controller
                     'news_type' => $item->news_type,
                     'is_featured' => $item->is_featured,
                     'total_views' => $item->total_views,
+                    'likes_count' => $item->likes_count,
+                    'comments_count' => $item->comments_count,
+                    'is_liked' => $isLiked,
                     'publish_date' => $item->publish_date,
                     'status' => $item->status,
                     'created_at' => $item->created_at,
@@ -556,11 +569,16 @@ class HomeController extends Controller
             'category:id,' . $categoryColumn,
             'user:id,name',
             'media',
-        ])->find($id);
+        ])
+            ->withCount(['likes', 'comments' => fn($query) => $query->where('is_approved', true)])
+            ->find($id);
 
         if (!$news) {
             return Util::getErrorMessage('News not found.');
         }
+
+        $isLiked = Like::where('user_id', Auth::id())->where('news_id', $news->id)->first();
+        $isLiked = $isLiked ? true : false;
 
         $media = $news->media->map(function ($mediaItem) {
             return [
@@ -584,6 +602,9 @@ class HomeController extends Controller
             'news_type' => $news->news_type,
             'is_featured' => $news->is_featured,
             'total_views' => $news->total_views,
+            'likes_count' => $news->likes_count,
+            'comments_count' => $news->comments_count,
+            'is_liked' => $isLiked,
             'publish_date' => $news->publish_date,
             'status' => $news->status,
             'created_at' => $news->created_at,
@@ -728,6 +749,7 @@ class HomeController extends Controller
             };
 
             $news = News::with('media')
+                ->withCount(['likes', 'comments' => fn($query) => $query->where('is_approved', true)])
                 ->whereHas('media', fn($query) => $query->where('media_type', 'video'))
                 ->orderBy('id', 'desc')
                 ->get()
@@ -750,6 +772,8 @@ class HomeController extends Controller
                             ];
                         })->values(),
                         'total_views' => $item->total_views,
+                        'likes_count' => $item->likes_count,
+                        'comments_count' => $item->comments_count,
                         'publish_date' => $item->publish_date,
                         'news_type' => $item->news_type,
                         'created_at' => $item->created_at,
@@ -947,6 +971,7 @@ class HomeController extends Controller
             };
 
             $news = News::with(['category', 'media'])
+                ->withCount(['likes', 'comments' => fn($query) => $query->where('is_approved', true)])
                 ->where('slug', $slug)
                 ->first();
 
@@ -974,6 +999,8 @@ class HomeController extends Controller
                     ];
                 })->values(),
                 'news_type' => $news->news_type,
+                'likes_count' => $news->likes_count,
+                'comments_count' => $news->comments_count,
                 'created_at' => $news->created_at,
 
                 'category' => [
@@ -1007,6 +1034,30 @@ class HomeController extends Controller
      *         required=true,
      *         description="Category ID",
      *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         required=false,
+     *         description="Page number",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         required=false,
+     *         description="Number of news items per page",
+     *         @OA\Schema(type="integer", example=10)
+     *     ),
+     *
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         required=false,
+     *         description="Search keyword to filter news by title or description (any language)",
+     *         @OA\Schema(type="string", example="final")
      *     ),
      *
      *     @OA\Response(
@@ -1120,9 +1171,7 @@ class HomeController extends Controller
                 default => 'Category news fetched successfully.',
             };
 
-            $category = Category::with(['news' => function ($query) {
-                $query->with('media')->orderByDesc('id');
-            }])->where('id', $id)->first();
+            $category = Category::find($id);
 
             if (!$category) {
                 return Util::getErrorMessage(
@@ -1130,7 +1179,35 @@ class HomeController extends Controller
                 );
             }
 
-            $newsList = $category->news->map(function ($newsItem) use ($newsColumn, $newsDescriptionColumn) {
+            $perPage = (int) $request->input('per_page', 10);
+            $perPage = $perPage > 0 ? $perPage : 10;
+
+            $search = trim((string) $request->input('search', ''));
+
+            $newsPaginator = $category->news()
+                ->with('media')
+                ->withCount(['likes', 'comments' => fn($query) => $query->where('is_approved', true)])
+                ->when($search !== '', function ($query) use ($search) {
+                    $query->where(function ($q) use ($search) {
+                        $q->where('title', 'like', "%{$search}%")
+                            ->orWhere('titleInHindi', 'like', "%{$search}%")
+                            ->orWhere('titleInGujarati', 'like', "%{$search}%")
+                            ->orWhere('description', 'like', "%{$search}%")
+                            ->orWhere('descriptionInHindi', 'like', "%{$search}%")
+                            ->orWhere('descriptionInGujarati', 'like', "%{$search}%");
+                    });
+                })
+                ->orderByDesc('id')
+                ->paginate($perPage)
+                ->withQueryString();
+
+            $likedNewsIds = Like::where('user_id', Auth::id())
+                ->whereIn('news_id', collect($newsPaginator->items())->pluck('id'))
+                ->pluck('news_id')
+                ->all();
+
+            $newsList = collect($newsPaginator->items())->map(function ($newsItem) use ($newsColumn, $newsDescriptionColumn, $likedNewsIds) {
+                $isLiked = in_array($newsItem->id, $likedNewsIds);
                 return [
                     'id' => $newsItem->id,
                     'slug' => $newsItem->slug,
@@ -1148,6 +1225,9 @@ class HomeController extends Controller
                             'sort_order' => $mediaItem->pivot?->sort_order,
                         ];
                     })->values(),
+                    'likes_count' => $newsItem->likes_count,
+                    'comments_count' => $newsItem->comments_count,
+                    'is_liked' => $isLiked,
                     'publish_date' => $newsItem->publish_date,
                     'news_type' => $newsItem->news_type,
                     'created_at' => $newsItem->created_at,
@@ -1164,7 +1244,16 @@ class HomeController extends Controller
             return Util::getSuccessMessage(
                 $message,
                 [
-                    'category' => $response
+                    'category' => $response,
+                    'pagination' => [
+                        'current_page' => $newsPaginator->currentPage(),
+                        'per_page' => $newsPaginator->perPage(),
+                        'total' => $newsPaginator->total(),
+                        'last_page' => $newsPaginator->lastPage(),
+                        'from' => $newsPaginator->firstItem(),
+                        'to' => $newsPaginator->lastItem(),
+                        'has_more_pages' => $newsPaginator->hasMorePages(),
+                    ],
                 ]
             );
         } catch (\Exception $e) {

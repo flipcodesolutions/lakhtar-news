@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AlertController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\CategoryController;
@@ -69,6 +70,14 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/banners/{id}/edit', [BannerController::class, 'edit'])->name('admin.banner.edit');
     Route::put('/banners/{id}', [BannerController::class, 'update'])->name('admin.banner.update');
     Route::get('/banners/{id}', [BannerController::class, 'destroy'])->name('admin.banner.destroy');
+
+    // alert routes
+    Route::get('/alerts', [AlertController::class, 'index'])->name('admin.alert.index');
+    Route::get('/alerts/create', [AlertController::class, 'create'])->name('admin.alert.create');
+    Route::post('/alerts', [AlertController::class, 'store'])->name('admin.alert.store');
+    Route::get('/alerts/{id}/edit', [AlertController::class, 'edit'])->name('admin.alert.edit');
+    Route::put('/alerts/{id}', [AlertController::class, 'update'])->name('admin.alert.update');
+    Route::get('/alerts/{id}', [AlertController::class, 'destroy'])->name('admin.alert.destroy');
 
     Route::get('/media', [MediaController::class, 'index'])->name('admin.media.index');
     Route::get('/media/create', [MediaController::class, 'create'])->name('admin.media.create');

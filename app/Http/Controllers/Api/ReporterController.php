@@ -3,9 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Alert;
+use App\Models\Comments;
+use App\Models\Like;
 use App\Models\Media;
 use App\Models\News;
 use App\Utils\Util;
+use Dom\Comment;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -232,6 +236,7 @@ class ReporterController extends Controller
             };
 
             $news = News::with('media')
+                ->withCount(['likes', 'comments' => fn($query) => $query->where('is_approved', true)])
                 ->where('user_id', Auth::id())
                 ->when($request->filled('status'), function ($query) use ($request) {
                     $query->where('status', $request->status);
@@ -260,6 +265,8 @@ class ReporterController extends Controller
                         'video' => $item->video,
                         'media' => $media,
                         'news_type' => $item->news_type,
+                        'likes_count' => $item->likes_count,
+                        'comments_count' => $item->comments_count,
                         'status' => $item->status,
                         'created_at' => $item->created_at,
                     ];
@@ -362,6 +369,7 @@ class ReporterController extends Controller
             };
 
             $news = News::with('media')
+                ->withCount(['likes', 'comments' => fn($query) => $query->where('is_approved', true)])
                 ->where('id', $id)
                 // ->where('user_id', Auth::id())
                 ->first();
@@ -1554,6 +1562,127 @@ class ReporterController extends Controller
                 $message,
                 $media
             );
+        } catch (\Exception $e) {
+            return Util::getErrorMessage($e->getMessage());
+        }
+    }
+    public function getComments($news_id)
+    {
+        try {
+            $comments = Comments::with('user')->where('news_id', $news_id)->where('is_approved', true)->orderBy('id', 'desc')->get();
+            return Util::getSuccessMessage('Comments fetched successfully', $comments);
+        } catch (\Exception $e) {
+            return Util::getErrorMessage($e->getMessage());
+        }
+    }
+    public function addComment(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'news_id' => 'required|exists:news,id',
+                'comment' => 'required|string|max:255',
+            ]);
+            if ($validator->fails()) {
+                return Util::getErrorMessage(null, $validator->errors());
+            }
+            $comment = Comments::create([
+                'user_id' => Auth::id(),
+                'news_id' => $request->news_id,
+                'comment' => $request->comment,
+                'is_approved' => true,
+                'is_reported' => false,
+            ]);
+            return Util::getSuccessMessage('Comment added successfully', $comment);
+        } catch (\Exception $e) {
+            return Util::getErrorMessage($e->getMessage());
+        }
+    }
+    public function deleteComment($id)
+    {
+        try {
+            $comment = Comments::find($id);
+            if (!$comment) {
+                return Util::getErrorMessage('Comment not found');
+            }
+            $comment->delete();
+            return Util::getSuccessMessage('Comment deleted successfully');
+        } catch (\Exception $e) {
+            return Util::getErrorMessage($e->getMessage());
+        }
+    }
+    public function reportComment($id)
+    {
+        try {
+            $comment = Comments::find($id);
+            if (!$comment) {
+                return Util::getErrorMessage('Comment not found');
+            }
+            $comment->is_reported = true;
+            $comment->save();
+            return Util::getSuccessMessage('Comment reported successfully');
+        } catch (\Exception $e) {
+            return Util::getErrorMessage($e->getMessage());
+        }
+    }
+    public function addLike($news_id)
+    {
+        try {
+            $like = Like::where('user_id', Auth::id())->where('news_id', $news_id)->first();
+            if ($like) {
+                return Util::getErrorMessage('You have already liked this news');
+            }
+            Like::create([
+                'user_id' => Auth::id(),
+                'news_id' => $news_id,
+            ]);
+            return Util::getSuccessMessage('Like added successfully');
+        } catch (\Exception $e) {
+            return Util::getErrorMessage($e->getMessage());
+        }
+    }
+    public function removeLike($news_id)
+    {
+        try {
+            $like = Like::where('user_id', Auth::id())->where('news_id', $news_id)->first();
+            if (!$like) {
+                return Util::getErrorMessage('Like not found');
+            }
+            $like->delete();
+            return Util::getSuccessMessage('Like removed successfully');
+        } catch (\Exception $e) {
+            return Util::getErrorMessage($e->getMessage());
+        }
+    }
+    public function getAlerts()
+    {
+        try {
+            $language = Auth::user()?->language ?? 'guj';
+            $titleColumn = match ($language) {
+                'hin' => 'titleInHindi',
+                'guj' => 'titleInGujarati',
+                default => 'title',
+            };
+
+            $detailsColumn = match ($language) {
+                'hin' => 'detailsInHindi',
+                'guj' => 'detailsInGujarati',
+                default => 'details',
+            };
+            $alerts = Alert::where('status', 1)->where('end_date', '>=', now())->orderBy('id', 'desc')->get();
+            $alerts = $alerts->map(function ($alert) use ($titleColumn, $detailsColumn) {
+                return [
+                    'id' => $alert->id,
+                    'title' => $alert->$titleColumn,
+                    'details' => $alert->$detailsColumn,
+                    'type' => $alert->type,
+                ];
+            });
+            $message = match ($language) {
+                'hin' => 'अलर्ट सूची सफलतापूर्वक प्राप्त की गई',
+                'guj' => 'અલર્ટ સૂચિ સફળતાપૂર્વક મેળવી',
+                default => 'Alerts fetched successfully',
+            };
+            return Util::getSuccessMessage($message, $alerts);
         } catch (\Exception $e) {
             return Util::getErrorMessage($e->getMessage());
         }

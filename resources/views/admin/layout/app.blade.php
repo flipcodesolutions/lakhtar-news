@@ -51,6 +51,11 @@
                         </a>
                     </li>
                     <li>
+                        <a href="{{ route('admin.alert.index') }}" class="{{ request()->routeIs('admin.alert.index') ? 'active' : '' }}">
+                            <i class="fas fa-bell"></i> Alerts
+                        </a>
+                    </li>
+                    <li>
                         <a href="{{ route('admin.media.index') }}" class="{{ request()->routeIs('admin.media.index') ? 'active' : '' }}">
                             <i class="fas fa-images"></i> Media
                         </a>

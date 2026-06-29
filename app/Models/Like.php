@@ -4,29 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Comments extends Model
+class Like extends Model
 {
     protected $fillable = [
         'user_id',
         'news_id',
-        'comment',
-        'is_approved',
-        'is_reported',
     ];
-
-    protected function casts(): array
-    {
-        return [
-            'is_approved' => 'boolean',
-            'is_reported' => 'boolean',
-        ];
-    }
 
     public function user()
     {
         return $this->belongsTo(User::class);
     }
-
     public function news()
     {
         return $this->belongsTo(News::class);

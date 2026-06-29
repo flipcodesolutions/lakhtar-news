@@ -47,7 +47,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/watch-histories', [AuthController::class, 'getWatchHistories']);
     Route::post('/add-watch-history', [AuthController::class, 'addWatchHistory']);
     Route::delete('/remove-watch-history/{id}', [AuthController::class, 'removeWatchHistory']);
-
+    Route::delete('/remove-all-watch-histories', [AuthController::class, 'removeAllWatchHistories']);
 
 
     // Reporter side's APIs
@@ -59,6 +59,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/my-dashboard-stat', [ReporterController::class, 'dashboardStat']);
 
     Route::get('/media', [ReporterController::class, 'getAllMedia']);
+    Route::get('/top-reporter', [HomeController::class, 'getTopReporters']);
 
+    Route::get('/comments/{news_id}', [ReporterController::class, 'getComments']);
+    Route::post('/add-comment', [ReporterController::class, 'addComment']);
+    Route::delete('/delete-comment/{id}', [ReporterController::class, 'deleteComment']);
+    Route::post('/report-comment/{id}', [ReporterController::class, 'reportComment']);
+
+    Route::post('/like-news/{news_id}', [ReporterController::class, 'addLike']);
+    Route::delete('/unlike-news/{news_id}', [ReporterController::class, 'removeLike']);
+
+    Route::get('/alerts', [ReporterController::class, 'getAlerts']);
 });
-Route::get('/top-reporter', [HomeController::class, 'getTopReporters']);
