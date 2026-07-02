@@ -70,4 +70,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/unlike-news/{news_id}', [ReporterController::class, 'removeLike']);
 
     Route::get('/alerts', [ReporterController::class, 'getAlerts']);
+
+    Route::get('/my-liked-news', [HomeController::class, 'myLikedNews']);
 });
+// cms APIs
+Route::get('/cms', [AuthController::class, 'getCmsSlugs']);
+Route::get('/cms/{slug}', [AuthController::class, 'getCmsDetails']);

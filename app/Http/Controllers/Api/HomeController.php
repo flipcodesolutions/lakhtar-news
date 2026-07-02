@@ -1401,4 +1401,21 @@ class HomeController extends Controller
             return Util::getErrorMessage($e->getMessage());
         }
     }
+    public function myLikedNews()
+    {
+        try {
+            $likedNews = Like::where('user_id', Auth::id())
+                ->with('news')
+                ->get();
+
+            return Util::getSuccessMessage(
+                'My liked news fetched successfully.',
+                [
+                    'liked_news' => $likedNews
+                ]
+            );
+        } catch (\Exception $e) {
+            return Util::getErrorMessage($e->getMessage());
+        }
+    }
 }

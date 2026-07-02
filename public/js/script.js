@@ -113,6 +113,28 @@ document.addEventListener('DOMContentLoaded', function () {
         })
     })
 
+    // Handle sidebar dropdowns
+    const sidebarDropdownToggles = document.querySelectorAll('.sidebar-dropdown-toggle')
+
+    sidebarDropdownToggles.forEach(toggle => {
+        toggle.addEventListener('click', function (e) {
+            e.preventDefault()
+
+            const dropdown = this.closest('.sidebar-dropdown')
+            if (!dropdown) {
+                return
+            }
+
+            document.querySelectorAll('.sidebar-dropdown.open').forEach(item => {
+                if (item !== dropdown) {
+                    item.classList.remove('open')
+                }
+            })
+
+            dropdown.classList.toggle('open')
+        })
+    })
+
     // Handle dropdowns
     const dropdownToggles = document.querySelectorAll('.dropdown-toggle')
 

@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\HomeController;
 use App\Http\Controllers\Admin\NewsController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\CmsController;
 use App\Http\Controllers\MediaController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -90,4 +91,8 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/top-reporters', [HomeController::class, 'topReporters'])->name('admin.top-reporters.index');
     Route::post('/top-reporters/store', [HomeController::class, 'storeTopReporter'])->name('admin.top-reporters.store');
     Route::get('/top-reporters/delete/{id}', [HomeController::class, 'destroyTopReporter'])->name('admin.top-reporters.destroy');
+
+    // cms routes
+    Route::get('/cms/{slug}', [CmsController::class, 'show'])->name('admin.cms.show');
+    Route::put('/cms/update/{slug}', [CmsController::class, 'update'])->name('admin.cms.update');
 });

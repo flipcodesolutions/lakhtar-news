@@ -212,6 +212,40 @@ body {
     text-align: center;
 }
 
+.sidebar-dropdown-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.sidebar-dropdown-toggle .sidebar-dropdown-arrow {
+    margin-right: 0;
+    width: auto;
+    font-size: 12px;
+    transition: transform 0.3s ease;
+}
+
+.sidebar-dropdown.open .sidebar-dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.sidebar-submenu {
+    list-style: none;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+.sidebar-dropdown.open .sidebar-submenu {
+    max-height: 300px;
+}
+
+.sidebar-submenu a {
+    padding: 8px 20px 8px 44px;
+    font-size: 13px;
+}
+
 .main-content {
     flex: 1;
     margin-left: var(--sidebar-width);
@@ -2044,4 +2078,9 @@ a.btn:hover {
 a {
     text-decoration: none;
     color: var(--text-color);
+}
+
+.divider {
+    border-bottom: 1px solid #b5c1d0;
+    margin: 20px 0;
 }

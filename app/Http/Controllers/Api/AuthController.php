@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Cms;
 use App\Models\User;
 use App\Models\UserBookmark;
 use App\Models\UserFavoriteCategory;
@@ -1604,6 +1605,26 @@ class AuthController extends Controller
 
             Auth::user()->watchHistories()->delete();
             return Util::getSuccessMessage($message);
+        } catch (\Exception $e) {
+            return Util::getErrorMessage($e->getMessage());
+        }
+    }
+
+    public function getCmsSlugs()
+    {
+        try {
+            $cms = Cms::select('slug')->get();
+            return Util::getSuccessMessage('CMS slugs fetched successfully', $cms);
+        } catch (\Exception $e) {
+            return Util::getErrorMessage($e->getMessage());
+        }
+    }
+
+    public function getCmsDetails($slug)
+    {
+        try {
+            $cms = Cms::where('slug', $slug)->first();
+            return Util::getSuccessMessage('CMS details fetched successfully', $cms);
         } catch (\Exception $e) {
             return Util::getErrorMessage($e->getMessage());
         }

@@ -65,6 +65,25 @@
                             <i class="fas fa-crown"></i> Top Reporters
                         </a>
                     </li>
+                    <li class="divider"></li>
+                    <li class="sidebar-dropdown {{ request()->routeIs('admin.cms.*') ? 'open' : '' }}">
+                        <a href="#" class="sidebar-dropdown-toggle {{ request()->routeIs('admin.cms.*') ? 'active' : '' }}">
+                            <i class="fas fa-file-alt"></i> Content Management
+                            <i class="fas fa-chevron-down sidebar-dropdown-arrow"></i>
+                        </a>
+                        <ul class="sidebar-submenu">
+                            <li>
+                                <a href="{{ route('admin.cms.show', ['slug' => 'privacy-policy']) }}" class="{{ request()->routeIs('admin.cms.*') && request()->route('slug') === 'privacy-policy' ? 'active' : '' }}">
+                                    Privacy Policy
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('admin.cms.show', ['slug' => 'terms-and-conditions']) }}" class="{{ request()->routeIs('admin.cms.*') && request()->route('slug') === 'terms-and-conditions' ? 'active' : '' }}">
+                                    Terms and Conditions
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
                 </ul>
             </div>
         </aside>
