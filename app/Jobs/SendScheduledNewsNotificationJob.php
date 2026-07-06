@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\News;
-use App\Models\User;
+use App\Services\AppNotificationService;
 use App\Services\FirebaseNotificationService;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -41,14 +41,16 @@ class SendScheduledNewsNotificationJob implements ShouldBeUnique, ShouldQueue
      */
     public function uniqueId(): string
     {
-        return 'scheduled-news-notification-'.$this->newsId;
+        return 'scheduled-news-notification-' . $this->newsId;
     }
 
     /**
      * Execute the job.
      */
-    public function handle(FirebaseNotificationService $firebaseNotification): void
-    {
+    public function handle(
+        FirebaseNotificationService $firebaseNotification,
+        AppNotificationService $appNotification
+    ): void {
         $news = DB::transaction(function () {
             $news = News::query()
                 ->whereKey($this->newsId)
@@ -71,7 +73,7 @@ class SendScheduledNewsNotificationJob implements ShouldBeUnique, ShouldQueue
             return;
         }
 
-        $tokens = $this->getActiveUserFcmTokens();
+        $tokens = $appNotification->getNewsBroadcastFcmTokens($news);
 
         if ($tokens === []) {
             Log::warning('Scheduled news notification skipped: no FCM tokens available', [
@@ -115,22 +117,6 @@ class SendScheduledNewsNotificationJob implements ShouldBeUnique, ShouldQueue
 
             throw $e;
         }
-    }
-
-    /**
-     * @return list<string>
-     */
-    protected function getActiveUserFcmTokens(): array
-    {
-        return User::query()
-            ->where('role', 'user')
-            ->where('is_active', true)
-            ->whereNotNull('fcm_token')
-            ->where('fcm_token', '!=', '')
-            ->pluck('fcm_token')
-            ->unique()
-            ->values()
-            ->all();
     }
 
     protected function markNotificationSent(News $news): void

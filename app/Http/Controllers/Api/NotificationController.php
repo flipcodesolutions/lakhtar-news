@@ -43,6 +43,7 @@ class NotificationController extends Controller
                     'is_read' => $userNotification->is_read,
                     'read_at' => $userNotification->read_at,
                     'created_at' => $userNotification->created_at,
+                    'updated_at' => $userNotification->updated_at,
                 ];
             });
 
@@ -154,7 +155,7 @@ class NotificationController extends Controller
 
                 return Util::getSuccessMessage($result['message'], [
                     'firebase_response' => $result['response'] ?? null,
-                    'fcm_token_preview' => substr($request->fcm_token, 0, 20).'...',
+                    'fcm_token_preview' => substr($request->fcm_token, 0, 20) . '...',
                 ]);
             }
 

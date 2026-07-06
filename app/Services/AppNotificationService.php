@@ -20,16 +20,25 @@ class AppNotificationService
         protected FirebaseNotificationService $firebaseNotification
     ) {}
 
-    public function notifyNewsApproved(News $news): Notification
+    public function notifyNewsApproved(News $news): ?Notification
     {
         $news->loadMissing('user');
 
-        // Send immediately on admin approval. publish_date is not checked for push.
-        return $this->dispatchToUsers(
+        if (! $this->isNewsPublishDateToday($news)) {
+            Log::info('News approved push skipped: publish date is not today', [
+                'news_id' => $news->id,
+                'publish_date' => $news->publish_date?->toDateString(),
+            ]);
+
+            return null;
+        }
+
+        // Notify active app users only; exclude the author and all reporters/admins.
+        $notification = $this->dispatchToUsers(
             type: Notification::TYPE_NEWS_APPROVED,
             title: 'New Story Published',
             message: $news->title,
-            userIds: $this->getActiveUserIds(),
+            userIds: $this->getNewsBroadcastRecipientIds($news),
             audience: Notification::AUDIENCE_USER,
             referenceType: 'news',
             referenceId: $news->id,
@@ -40,6 +49,21 @@ class AppNotificationService
                 'publish_date' => $news->publish_date?->toDateString() ?? '',
             ]
         );
+
+        $news->forceFill(['notification_sent' => true])->save();
+
+        return $notification;
+    }
+
+    protected function isNewsPublishDateToday(News $news): bool
+    {
+        if ($news->publish_date === null) {
+            return false;
+        }
+
+        $timezone = 'Asia/Kolkata';
+
+        return $news->publish_date->timezone($timezone)->isSameDay(now($timezone));
     }
 
     public function notifyNewsRejected(News $news): ?Notification
@@ -141,6 +165,39 @@ class AppNotificationService
                 'reporter_id' => (string) $news->user_id,
             ]
         );
+    }
+
+    /**
+     * Active app users eligible for news publish/approval broadcasts.
+     * Reporters and admins are excluded; the news author is also excluded.
+     *
+     * @return list<int>
+     */
+    public function getNewsBroadcastRecipientIds(News $news): array
+    {
+        return User::query()
+            ->where('role', 'user')
+            ->where('is_active', true)
+            ->when($news->user_id, fn ($query) => $query->where('id', '!=', $news->user_id))
+            ->pluck('id')
+            ->all();
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function getNewsBroadcastFcmTokens(News $news): array
+    {
+        return User::query()
+            ->where('role', 'user')
+            ->where('is_active', true)
+            ->when($news->user_id, fn ($query) => $query->where('id', '!=', $news->user_id))
+            ->whereNotNull('fcm_token')
+            ->where('fcm_token', '!=', '')
+            ->pluck('fcm_token')
+            ->unique()
+            ->values()
+            ->all();
     }
 
     /**
@@ -281,17 +338,15 @@ class AppNotificationService
         array $data,
         string $type
     ): void {
-        $tokens = $this->getActiveUserFcmTokens();
-
-        if ($tokens === []) {
-            Log::warning('Push notification skipped: no user accounts with FCM tokens', [
+        if ($userIds === []) {
+            Log::warning('Push notification skipped: no eligible recipients', [
                 'type' => $type,
             ]);
 
             return;
         }
 
-        $this->sendPushToTokenList($tokens, $title, $message, $data, $type);
+        $this->sendPushToUsers($userIds, $title, $message, $data, $type, 'user');
     }
 
     /**
@@ -336,7 +391,7 @@ class AppNotificationService
             }
         }
 
-        $this->sendPushToUsers($reporterIds, $title, $message, $data, $type);
+        $this->sendPushToUsers($reporterIds, $title, $message, $data, $type, 'reporter');
     }
 
     /**
@@ -382,13 +437,20 @@ class AppNotificationService
         string $title,
         string $message,
         array $data = [],
-        ?string $type = null
+        ?string $type = null,
+        ?string $role = null
     ): void {
         try {
-            $tokens = User::query()
+            $query = User::query()
                 ->whereIn('id', $userIds)
                 ->whereNotNull('fcm_token')
-                ->where('fcm_token', '!=', '')
+                ->where('fcm_token', '!=', '');
+
+            if ($role !== null) {
+                $query->where('role', $role);
+            }
+
+            $tokens = $query
                 ->pluck('fcm_token')
                 ->unique()
                 ->values()
