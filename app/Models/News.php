@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -26,6 +27,7 @@ class News extends Model
         'is_featured',
         'total_views',
         'publish_date',
+        'notification_sent',
         'status',
         'reject_reason',
     ];
@@ -36,9 +38,27 @@ class News extends Model
             'is_featured' => 'boolean',
             'total_views' => 'integer',
             'publish_date' => 'datetime',
+            'notification_sent' => 'boolean',
             'status' => 'string',
             'reject_reason' => 'string',
         ];
+    }
+
+    public function scopeEligibleForScheduledNotification(Builder $query): Builder
+    {
+        return $query
+            ->where('status', 'approved')
+            ->whereNotNull('publish_date')
+            ->where('publish_date', '<=', now())
+            ->where('notification_sent', false);
+    }
+
+    public function isEligibleForScheduledNotification(): bool
+    {
+        return $this->status === 'approved'
+            && $this->publish_date !== null
+            && $this->publish_date->lte(now())
+            && ! $this->notification_sent;
     }
 
     public function category(): BelongsTo
