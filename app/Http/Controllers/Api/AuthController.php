@@ -7,6 +7,7 @@ use App\Models\Cms;
 use App\Models\User;
 use App\Models\UserBookmark;
 use App\Models\UserFavoriteCategory;
+use App\Models\WatchHistory;
 use App\Utils\Util;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -80,7 +81,15 @@ class AuthController extends Controller
 
             $mobile = $request->mobile;
 
-            if ($mobile == '9999999999' || $mobile == '9316130308' || $mobile == '9687574999' || $mobile == '8758585996') {
+            if (
+                $mobile == '9999999999' || $mobile == '9316130308'
+                || $mobile == '9687574999' || $mobile == '8758585996'
+                || $mobile == '1818181818' || $mobile == '1111111111'
+                || $mobile == '2222222222' || $mobile == '3333333333'
+                || $mobile == '4444444444' || $mobile == '5555555555'
+                || $mobile == '6666666666' || $mobile == '7777777777'
+                || $mobile == '8888888888'
+            ) {
 
                 $otp = 1234;
 
@@ -199,7 +208,8 @@ class AuthController extends Controller
         try {
             $request->validate([
                 'mobile' => 'required|digits:10',
-                'otp' => 'required|digits:4'
+                'otp' => 'required|digits:4',
+                'fcm_token' => 'nullable|string',
             ]);
 
             $mobile = $request->mobile;
@@ -221,6 +231,10 @@ class AuthController extends Controller
                         'mobile' => $mobile
                     ]);
                 } else {
+                    if ($request->filled('fcm_token')) {
+                        app(\App\Services\FcmTokenService::class)->syncToken($user, $request->fcm_token);
+                    }
+
                     $token = $user->createToken('token')->plainTextToken;
                     Cache::forget('otp_' . $mobile);
                     return Util::getSuccessMessage('OTP verified for registered user', [
@@ -368,6 +382,7 @@ class AuthController extends Controller
                 'language' => 'required|in:eng,hin,guj',
                 'interest' => 'required|array|min:1',
                 'interest.*' => 'exists:categories,id',
+                'fcm_token' => 'nullable|string',
             ]);
 
             DB::beginTransaction();
@@ -379,7 +394,10 @@ class AuthController extends Controller
                 'language' => $request->language,
                 'role' => 'user',
                 'password' => Hash::make('123456'),
+                'fcm_token' => $request->fcm_token,
             ]);
+
+            $token = $user->createToken('auth_token')->plainTextToken;
 
             foreach ($request->interest as $categoryId) {
                 UserFavoriteCategory::create([
@@ -390,8 +408,13 @@ class AuthController extends Controller
 
             DB::commit();
 
+            if ($request->filled('fcm_token')) {
+                app(\App\Services\FcmTokenService::class)->syncToken($user, $request->fcm_token);
+            }
+
             return Util::getSuccessMessage('User registered successfully.', [
-                'user' => $user
+                'user' => $user,
+                'token' => $token
             ]);
         } catch (\Exception $e) {
 
@@ -490,10 +513,10 @@ class AuthController extends Controller
     }
 
     /**
-     * @OA\Put(
-     *     path="/update-profile",
+     * @OA\Post(
+     *     path="/profile",
      *     summary="Update profile",
-     *     description="Updates the user profile with the provided information.",
+     *     description="Updates the authenticated user profile. Use POST with multipart/form-data for profile image upload.",
      *     tags={"User"},
      *     security={{"sanctum": {}}},
      *     @OA\RequestBody(
@@ -501,7 +524,7 @@ class AuthController extends Controller
      *         @OA\MediaType(
      *             mediaType="multipart/form-data",
      *             @OA\Schema(
-     *                 required={"name", "email", "language", "password","mobile"},
+     *                 required={"name", "email", "language", "mobile"},
      *                 @OA\Property(
      *                     property="mobile",
      *                     type="string",
@@ -524,13 +547,7 @@ class AuthController extends Controller
      *                     property="language",
      *                     type="string",
      *                     description="User language",
-     *                     example="en"
-     *                 ),
-     *                 @OA\Property(
-     *                     property="password",
-     *                     type="string",
-     *                     description="User password",
-     *                     example="123456"
+     *                     example="guj"
      *                 ),
      *                 @OA\Property(
      *                     property="profile_image",
@@ -543,17 +560,17 @@ class AuthController extends Controller
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="OTP sent successfully",
+     *         description="Profile updated successfully",
      *         @OA\JsonContent(
      *             @OA\Property(
-     *                 property="status",
-     *                 type="string",
-     *                 example="success"
+     *                 property="success",
+     *                 type="boolean",
+     *                 example=true
      *             ),
      *             @OA\Property(
      *                 property="message",
      *                 type="string",
-     *                 example="OTP sent successfully."
+     *                 example="Profile updated successfully"
      *             )
      *         )
      *     ),
@@ -571,12 +588,98 @@ class AuthController extends Controller
      *             @OA\Property(
      *                 property="message",
      *                 type="string",
-     *                 example="The phone field is required."
+     *                 example="The email field is required."
      *             ),
      *             @OA\Property(
      *                 property="errors",
      *                 type="object",
-     *                 example={"phone": {"The phone must be 10 digits."}}
+     *                 example={"email": {"The email field is required."}}
+     *             )
+     *         )
+     *     )
+     * )
+     *
+     * @OA\Put(
+     *     path="/update-profile",
+     *     summary="Update profile",
+     *     description="Updates the authenticated user profile with the provided information.",
+     *     tags={"User"},
+     *     security={{"sanctum": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"name", "email", "language", "mobile"},
+     *                 @OA\Property(
+     *                     property="mobile",
+     *                     type="string",
+     *                     description="10-digit mobile number",
+     *                     example="9876543210"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="name",
+     *                     type="string",
+     *                     description="User name",
+     *                     example="John Doe"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="email",
+     *                     type="string",
+     *                     description="User email",
+     *                     example="john.doe@example.com"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="language",
+     *                     type="string",
+     *                     description="User language",
+     *                     example="guj"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="profile_image",
+     *                     type="string",
+     *                     format="binary",
+     *                     description="Profile image file (jpeg, png, jpg, gif, webp - max 2MB)"
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Profile updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="success",
+     *                 type="boolean",
+     *                 example=true
+     *             ),
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="Profile updated successfully"
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="The email field is required."
+     *             ),
+     *             @OA\Property(
+     *                 property="errors",
+     *                 type="object",
+     *                 example={"email": {"The email field is required."}}
      *             )
      *         )
      *     )
@@ -586,12 +689,19 @@ class AuthController extends Controller
     public function updateProfile(Request $request)
     {
         try {
+            $user = Auth::user();
+
+            if (! $user) {
+                return Util::getErrorMessage('Unauthenticated.');
+            }
+
             $request->validate([
-                'mobile' => 'required|digits:10',
+                'mobile' => 'required|digits:10|unique:users,mobile,' . $user->id,
                 'name' => 'required|string|max:255',
-                'email' => 'required|string|email|max:255',
+                'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
                 'language' => 'required|string|max:255',
                 'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+                'fcm_token' => 'nullable|string',
             ]);
 
             $message = match ($request->language) {
@@ -600,18 +710,14 @@ class AuthController extends Controller
                 default => 'Profile updated successfully',
             };
 
-            $user = User::where('mobile', $request->mobile)->first();
-
-            if (!$user) {
-                $user = new User();
-                $user->mobile = $request->mobile;
-                $user->role = 'user';
-                $user->password = Hash::make($request->password);
-            }
-
+            $user->mobile = $request->mobile;
             $user->name = $request->name;
             $user->email = $request->email;
             $user->language = $request->language;
+
+            if ($request->filled('fcm_token')) {
+                app(\App\Services\FcmTokenService::class)->syncToken($user, $request->fcm_token);
+            }
 
             if ($request->hasFile('profile_image')) {
                 if ($user->profile_image) {
@@ -619,6 +725,10 @@ class AuthController extends Controller
                     if (File::exists($oldPath)) {
                         File::delete($oldPath);
                     }
+                }
+
+                if (! File::exists(public_path('profile'))) {
+                    File::makeDirectory(public_path('profile'), 0755, true);
                 }
 
                 $profileImage = $request->file('profile_image');
@@ -632,6 +742,12 @@ class AuthController extends Controller
             return Util::getSuccessMessage($message, [
                 'user' => $user
             ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->validator->errors()->first(),
+                'data' => $e->errors(),
+            ], 422);
         } catch (\Exception $e) {
             return Util::getErrorMessage($e->getMessage());
         }
@@ -1429,7 +1545,7 @@ class AuthController extends Controller
         ]);
 
         $user = User::find(Auth::user()->id);
-        $watchHistories = $user->watchHistories()->get();
+        $watchHistories = $user->watchHistories()->active()->get();
 
         return Util::getSuccessMessage($message, $watchHistories);
     }
@@ -1502,9 +1618,10 @@ class AuthController extends Controller
             };
 
             $user = User::find(Auth::user()->id);
-            $user->watchHistories()->firstOrCreate([
-                'news_id' => $request->news_id,
-            ]);
+            $user->watchHistories()->updateOrCreate(
+                ['news_id' => $request->news_id],
+                ['status' => WatchHistory::STATUS_ACTIVE]
+            );
 
             return Util::getSuccessMessage($message);
         } catch (\Exception $e) {
@@ -1580,9 +1697,12 @@ class AuthController extends Controller
                 default => 'Watch history successfully removed',
             };
 
-            $deleted = Auth::user()->watchHistories()->where('id', $id)->delete();
+            $updated = Auth::user()->watchHistories()
+                ->active()
+                ->where('id', $id)
+                ->update(['status' => WatchHistory::STATUS_DELETED]);
 
-            if (! $deleted) {
+            if (! $updated) {
                 return Util::getErrorMessage('Watch history not found.');
             }
 
@@ -1603,7 +1723,9 @@ class AuthController extends Controller
                 default => 'All watch histories removed successfully',
             };
 
-            Auth::user()->watchHistories()->delete();
+            Auth::user()->watchHistories()
+                ->active()
+                ->update(['status' => WatchHistory::STATUS_DELETED]);
             return Util::getSuccessMessage($message);
         } catch (\Exception $e) {
             return Util::getErrorMessage($e->getMessage());
@@ -1613,7 +1735,7 @@ class AuthController extends Controller
     public function getCmsSlugs()
     {
         try {
-            $cms = Cms::select('slug')->get();
+            $cms = Cms::select('title', 'slug')->get();
             return Util::getSuccessMessage('CMS slugs fetched successfully', $cms);
         } catch (\Exception $e) {
             return Util::getErrorMessage($e->getMessage());
@@ -1625,6 +1747,30 @@ class AuthController extends Controller
         try {
             $cms = Cms::where('slug', $slug)->first();
             return Util::getSuccessMessage('CMS details fetched successfully', $cms);
+        } catch (\Exception $e) {
+            return Util::getErrorMessage($e->getMessage());
+        }
+    }
+
+    public function storeFcmToken(Request $request)
+    {
+        try {
+            $fcmToken = $request->header('X-FCM-Token') ?? $request->input('fcm_token');
+
+            $request->merge([
+                'fcm_token' => is_string($fcmToken) ? trim($fcmToken) : null,
+            ]);
+
+            $request->validate([
+                'fcm_token' => 'required|string',
+            ]);
+
+            $user = User::find(Auth::user()->id);
+            app(\App\Services\FcmTokenService::class)->syncToken($user, $request->fcm_token);
+
+            return Util::getSuccessMessage('FCM token stored successfully', [
+                'has_fcm_token' => true,
+            ]);
         } catch (\Exception $e) {
             return Util::getErrorMessage($e->getMessage());
         }

@@ -6,15 +6,21 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Media;
 use App\Models\News;
+use App\Services\AppNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class NewsController extends Controller
 {
+    public function __construct(
+        protected AppNotificationService $appNotification
+    ) {}
     public function index(Request $request)
     {
         $news = News::with(['category', 'user', 'media'])
@@ -181,13 +187,46 @@ class NewsController extends Controller
             'reject_reason' => $status === 'rejected' ? 'required|string|max:1000' : 'nullable|string|max:1000',
         ]);
 
+        $previousStatus = $news->status;
+
         $news->status = $status;
         $news->reject_reason = $status === 'rejected'
             ? trim((string) request('reject_reason'))
             : null;
         $news->save();
+        $news->refresh();
+
+        if ($status === 'approved' && $previousStatus !== 'approved') {
+            $this->dispatchNewsApprovedNotification($news);
+        } elseif ($status === 'rejected' && $previousStatus !== 'rejected') {
+            $this->dispatchNewsRejectedNotification($news);
+        }
 
         return redirect()->route('admin.reporter-news.index')->with('success', 'News status updated successfully.');
+    }
+
+    protected function dispatchNewsApprovedNotification(News $news): void
+    {
+        try {
+            $this->appNotification->notifyNewsApproved($news);
+        } catch (Throwable $e) {
+            Log::error('Failed to dispatch news approved notification', [
+                'news_id' => $news->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    protected function dispatchNewsRejectedNotification(News $news): void
+    {
+        try {
+            $this->appNotification->notifyNewsRejected($news);
+        } catch (Throwable $e) {
+            Log::error('Failed to dispatch news rejected notification', [
+                'news_id' => $news->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     private function validateNewsRequest(Request $request, ?News $news = null): void

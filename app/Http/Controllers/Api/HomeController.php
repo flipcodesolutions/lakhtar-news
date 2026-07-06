@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\Like;
 use App\Models\News;
 use App\Models\TopReporter;
+use App\Models\WatchHistory;
 use App\Utils\Util;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -81,7 +82,7 @@ class HomeController extends Controller
     {
         $search = $request->input('search', '');
 
-        $language = Auth::user()?->language ?? 'guj';
+        $language = Auth::user()->language ?? 'guj';
         $column = match ($language) {
             'hin' => 'nameInHindi',
             'guj' => 'nameInGujarati',
@@ -233,6 +234,7 @@ class HomeController extends Controller
             ->latest()
             ->get()
             ->map(function ($item) use ($titleColumn, $descriptionColumn) {
+                $total_views = WatchHistory::where('news_id', $item->id)->count();
                 $isLiked = Like::where('user_id', Auth::id())->where('news_id', $item->id)->first();
                 $isLiked = $isLiked ? true : false;
                 return [
@@ -256,7 +258,7 @@ class HomeController extends Controller
                     })->values(),
                     'news_type' => $item->news_type,
                     'is_featured' => $item->is_featured,
-                    'total_views' => $item->total_views,
+                    'total_views' => $total_views,
                     'likes_count' => $item->likes_count,
                     'comments_count' => $item->comments_count,
                     'is_liked' => $isLiked,
@@ -1186,6 +1188,8 @@ class HomeController extends Controller
 
             $newsPaginator = $category->news()
                 ->with('media')
+                ->where('status', 'approved')
+                ->whereDate('publish_date', '<=', now())
                 ->withCount(['likes', 'comments' => fn($query) => $query->where('is_approved', true)])
                 ->when($search !== '', function ($query) use ($search) {
                     $query->where(function ($q) use ($search) {

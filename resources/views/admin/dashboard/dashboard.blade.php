@@ -1,5 +1,5 @@
 @extends('admin.layout.app')
-@section('title', 'Lakhtar news - Dashboard')
+@section('title', 'Lakhtar News Update - Dashboard')
 @section('main')
     @php
         $approvalRate = $dashboardStats['totalNews'] > 0 ? round(($dashboardStats['approvedNews'] / $dashboardStats['totalNews']) * 100) : 0;

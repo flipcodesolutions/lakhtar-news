@@ -27,6 +27,7 @@ class User extends Authenticatable
         'language',
         'profile_image',
         'is_active',
+        'fcm_token',
     ];
 
     /**
@@ -71,9 +72,9 @@ class User extends Authenticatable
         return $this->hasMany(NewsView::class);
     }
 
-    public function notifications()
+    public function userNotifications()
     {
-        return $this->hasMany(Notification::class);
+        return $this->hasMany(UserNotification::class);
     }
 
     public function videoEdits()

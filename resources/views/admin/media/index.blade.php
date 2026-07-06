@@ -1,5 +1,5 @@
 @extends('admin.layout.app')
-@section('title', 'Lakhtar news - Media Library')
+@section('title', 'Lakhtar News Update - Media Library')
 
 @section('main')
     <style>

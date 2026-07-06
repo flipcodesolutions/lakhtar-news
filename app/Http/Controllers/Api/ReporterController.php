@@ -8,6 +8,7 @@ use App\Models\Comments;
 use App\Models\Like;
 use App\Models\Media;
 use App\Models\News;
+use App\Services\AppNotificationService;
 use App\Utils\Util;
 use Dom\Comment;
 use Illuminate\Http\UploadedFile;
@@ -15,9 +16,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class ReporterController extends Controller
 {
@@ -1592,6 +1595,29 @@ class ReporterController extends Controller
                 'is_approved' => true,
                 'is_reported' => false,
             ]);
+
+            $news = News::with('user')->find($request->news_id);
+            if ($news) {
+                try {
+                    $notification = app(AppNotificationService::class)->notifyNewComment($news, $comment, Auth::user());
+
+                    if (! $notification) {
+                        Log::info('Comment notification was not created', [
+                            'news_id' => $news->id,
+                            'comment_id' => $comment->id,
+                            'owner_id' => $news->user_id,
+                            'owner_role' => $news->user?->role,
+                        ]);
+                    }
+                } catch (Throwable $e) {
+                    Log::error('Failed to dispatch comment notification', [
+                        'news_id' => $news->id,
+                        'comment_id' => $comment->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
             return Util::getSuccessMessage('Comment added successfully', $comment);
         } catch (\Exception $e) {
             return Util::getErrorMessage($e->getMessage());

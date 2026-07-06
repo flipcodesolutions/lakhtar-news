@@ -1,5 +1,5 @@
 @extends('admin.layout.app')
-@section('title', 'Lakhtar news - Top Reporters')
+@section('title', 'Lakhtar News Update - Top Reporters')
 @section('main')
     <div class="main-content-inner">
         <!-- Custom CSS for page premium styles -->
@@ -69,7 +69,7 @@
                 justify-content: center;
                 font-size: 40px;
                 color: #ffffff;
-                text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             }
 
             .hero-badge {
@@ -84,16 +84,24 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
                 font-size: 14px;
                 border: 2px solid #ffffff;
                 animation: pulse-crown 2s infinite;
             }
 
             @keyframes pulse-crown {
-                0% { transform: scale(1); }
-                50% { transform: scale(1.1); }
-                100% { transform: scale(1); }
+                0% {
+                    transform: scale(1);
+                }
+
+                50% {
+                    transform: scale(1.1);
+                }
+
+                100% {
+                    transform: scale(1);
+                }
             }
 
             .hero-details {
@@ -249,7 +257,7 @@
                 border-radius: 12px;
                 width: 90%;
                 max-width: 500px;
-                box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+                box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
                 z-index: 1051;
                 transform: scale(0.9);
                 transition: transform 0.3s ease;
@@ -316,12 +324,14 @@
                     align-items: center;
                     padding: 24px;
                 }
+
                 .hero-meta-grid {
                     grid-template-columns: 1fr;
                     text-align: left;
                     margin: 0 auto 15px;
                     max-width: 250px;
                 }
+
                 .hero-dates {
                     justify-content: center;
                 }
@@ -347,7 +357,7 @@
                     <div class="hero-details">
                         <span class="hero-label">Active Top Reporter</span>
                         <h3 class="hero-name">{{ $activeTopReporter->user->name }}</h3>
-                        
+
                         <div class="hero-meta-grid">
                             <div class="hero-meta-item">
                                 <i class="fas fa-envelope"></i>
@@ -447,11 +457,7 @@
                                                 <i class="fas fa-user-minus"></i> Remove
                                             </a>
                                         @else
-                                            <button class="btn-sm make-top-reporter-btn" 
-                                                    style="border-color: #ffd700; color: #d4af37;"
-                                                    data-id="{{ $reporter->id }}" 
-                                                    data-name="{{ $reporter->name }}"
-                                                    title="Make Top Reporter">
+                                            <button class="btn-sm make-top-reporter-btn" style="border-color: #ffd700; color: #d4af37;" data-id="{{ $reporter->id }}" data-name="{{ $reporter->name }}" title="Make Top Reporter">
                                                 <i class="fas fa-crown"></i> Make Top
                                             </button>
                                         @endif
@@ -476,22 +482,22 @@
             <form action="{{ route('admin.top-reporters.store') }}" method="POST">
                 @csrf
                 <input type="hidden" id="promote-user-id" name="user_id">
-                
+
                 <div class="custom-modal-header">
                     <h4><i class="fas fa-crown"></i> Promote to Top Reporter</h4>
                     <button type="button" class="close-modal">&times;</button>
                 </div>
-                
+
                 <div class="custom-modal-body">
                     <p style="margin-bottom: 20px; color: #64748b; font-size: 14px;">
                         Set the active period for the selected reporter. Promoting this reporter will automatically deactivate any other active Top Reporter.
                     </p>
-                    
+
                     <div class="form-group">
                         <label for="promote-user-name">Selected Reporter</label>
                         <input type="text" id="promote-user-name" class="form-control" readonly style="background-color: #f8f9fa;">
                     </div>
-                    
+
                     <div class="form-row" style="margin-top: 15px;">
                         <div class="form-col">
                             <div class="form-group">
@@ -507,7 +513,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="custom-modal-footer">
                     <button type="button" class="btn btn-secondary close-modal" style="padding: 8px 16px; font-size: 14px;">Cancel</button>
                     <button type="submit" class="btn btn-primary" style="padding: 8px 16px; font-size: 14px; border-color: #ffd700; color: #b7131a; background: #fff;">
@@ -532,10 +538,10 @@
                 button.addEventListener('click', function() {
                     const userId = this.getAttribute('data-id');
                     const userName = this.getAttribute('data-name');
-                    
+
                     promoteUserIdInput.value = userId;
                     promoteUserNameInput.value = userName;
-                    
+
                     // Show modal
                     modal.style.display = 'flex';
                     // Trigger reflow for transition

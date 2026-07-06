@@ -1,5 +1,5 @@
 @extends('admin.layout.app')
-@section('title', 'Lakhtar news - Edit User')
+@section('title', 'Lakhtar News Update - Edit User')
 @section('main')
     <div class="main-content-inner">
         <div class="content-card">

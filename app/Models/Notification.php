@@ -4,28 +4,35 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Notification extends Model
 {
     use HasFactory;
 
+    public const TYPE_NEWS_APPROVED = 'news_approved';
+
+    public const TYPE_NEW_ALERT = 'new_alert';
+
+    public const TYPE_NEWS_REJECTED = 'news_rejected';
+
+    public const TYPE_NEW_COMMENT = 'new_comment';
+
+    public const AUDIENCE_USER = 'user';
+
+    public const AUDIENCE_REPORTER = 'reporter';
+
     protected $fillable = [
         'title',
         'message',
-        'user_id',
         'type',
-        'is_read',
+        'reference_type',
+        'reference_id',
+        'audience',
     ];
 
-    protected function casts(): array
+    public function userNotifications(): HasMany
     {
-        return [
-            'is_read' => 'boolean',
-        ];
-    }
-
-    public function user()
-    {
-        return $this->belongsTo(User::class);
+        return $this->hasMany(UserNotification::class);
     }
 }

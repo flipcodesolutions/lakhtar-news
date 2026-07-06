@@ -1,5 +1,5 @@
 @extends('admin.layout.app')
-@section('title', 'Lakhtar news - Reporter News List')
+@section('title', 'Lakhtar News Update - Reporter News List')
 @section('main')
     <style>
         .review-modal-overlay {

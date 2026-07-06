@@ -14,7 +14,7 @@
     <div class="login-container">
         <div class="login-card">
             <div class="login-logo">
-                <img src="images/logo.png" alt="Admin Logo">
+                <img src="{{ asset('images/logo.png') }}" alt="Admin Logo">
             </div>
             <h2 class="text-center mb-3">Admin Login</h2>
             <form action="{{ route('admin.login.post') }}" method="post">
@@ -40,21 +40,19 @@
                 </div>
                 <div class="form-group">
                     <button type="submit" class="btn btn-block">Login</button>
-                    @if (session('success'))
-                        <div class="alert alert-success" style="margin-top: 12px;">
-                            {{ session('success') }}
-                        </div>
-                    @endif
-                    @if (session('error'))
-                        <div class="alert alert-danger" style="margin-top: 12px;">
-                            {{ session('error') }}
-                        </div>
-                    @endif
                 </div>
             </form>
         </div>
     </div>
 
+    <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+    <script>
+        window.flashMessages = {
+            success: @json(session('success')),
+            error: @json(session('error')),
+        };
+    </script>
     <script src="{{ asset('js/script.js') }}"></script>
 </body>
 

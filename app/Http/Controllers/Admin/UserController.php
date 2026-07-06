@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\UserNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -130,7 +131,7 @@ class UserController extends Controller
         DB::transaction(function () use ($user) {
             $user->favoriteCategories()->detach();
             $user->newsViews()->delete();
-            $user->notifications()->delete();
+            UserNotification::where('user_id', $user->id)->delete();
             DB::table('user_bookmarks')->where('user_id', $user->id)->delete();
             $user->delete();
         });

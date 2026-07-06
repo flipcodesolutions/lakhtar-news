@@ -4,10 +4,17 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Alert;
+use App\Services\AppNotificationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class AlertController extends Controller
 {
+    public function __construct(
+        protected AppNotificationService $appNotification
+    ) {}
+
     public function index(Request $request)
     {
         $alerts = Alert::query()
@@ -53,7 +60,7 @@ class AlertController extends Controller
             'detailsInHindi' => 'nullable|string|max:255',
             'detailsInGujarati' => 'nullable|string|max:255',
             'type' => 'required|in:alert,info',
-            'status' => 'required|boolean',
+            'status' => 'required|in:0,1',
             'end_date' => 'nullable|date',
         ]);
 
@@ -65,9 +72,11 @@ class AlertController extends Controller
         $alert->detailsInHindi = $request->detailsInHindi;
         $alert->detailsInGujarati = $request->detailsInGujarati;
         $alert->type = $request->type;
-        $alert->status = $request->boolean('status');
+        $alert->status = $request->input('status') === '1';
         $alert->end_date = $request->end_date;
         $alert->save();
+
+        $this->dispatchAlertNotification($alert);
 
         return redirect()->route('admin.alert.index')->with('success', 'Alert created successfully.');
     }
@@ -99,9 +108,11 @@ class AlertController extends Controller
             'detailsInHindi' => 'nullable|string|max:255',
             'detailsInGujarati' => 'nullable|string|max:255',
             'type' => 'required|in:alert,info',
-            'status' => 'required|boolean',
+            'status' => 'required|in:0,1',
             'end_date' => 'nullable|date',
         ]);
+
+        $wasActive = (bool) $alert->status;
 
         $alert->title = $request->title;
         $alert->details = $request->details;
@@ -110,9 +121,13 @@ class AlertController extends Controller
         $alert->detailsInHindi = $request->detailsInHindi;
         $alert->detailsInGujarati = $request->detailsInGujarati;
         $alert->type = $request->type;
-        $alert->status = $request->boolean('status');
+        $alert->status = $request->input('status') === '1';
         $alert->end_date = $request->end_date;
         $alert->save();
+
+        if ($alert->status && ! $wasActive) {
+            $this->dispatchAlertNotification($alert);
+        }
 
         return redirect()->route('admin.alert.index')->with('success', 'Alert updated successfully.');
     }
@@ -128,5 +143,17 @@ class AlertController extends Controller
         $alert->delete();
 
         return redirect()->route('admin.alert.index')->with('success', 'Alert deleted successfully.');
+    }
+
+    protected function dispatchAlertNotification(Alert $alert): void
+    {
+        try {
+            $this->appNotification->notifyNewAlert($alert);
+        } catch (Throwable $e) {
+            Log::error('Failed to dispatch alert notification', [
+                'alert_id' => $alert->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

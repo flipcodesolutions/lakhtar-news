@@ -1,5 +1,5 @@
 @extends('admin.layout.app')
-@section('title', 'Lakhtar news - News List')
+@section('title', 'Lakhtar News Update - News List')
 @section('main')
     <div class="main-content-inner">
         <div class="content-card">
@@ -14,8 +14,7 @@
                 <div class="list-filter-grid">
                     <div class="list-filter-field list-filter-search">
                         <label for="news-search">Search</label>
-                        <input type="text" id="news-search" name="search" class="form-control" value="{{ request('search') }}"
-                            placeholder="Search by title or category">
+                        <input type="text" id="news-search" name="search" class="form-control" value="{{ request('search') }}" placeholder="Search by title or category">
                     </div>
                     <div class="list-filter-field">
                         <label for="news-status">Status</label>
@@ -87,7 +86,7 @@
                                 </td>
                                 <td>
                                     <span class="badge" style="text-transform: capitalize; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;
-                                        @if($item->news_type == 'breaking') background: #ffebeb; color: #b7131a;
+                                        @if ($item->news_type == 'breaking') background: #ffebeb; color: #b7131a;
                                         @elseif($item->news_type == 'trending') background: #e0f2fe; color: #0369a1;
                                         @elseif($item->news_type == 'live') background: #fef3c7; color: #d97706;
                                         @else background: #f1f5f9; color: #475569; @endif">
@@ -96,7 +95,7 @@
                                 </td>
                                 <td>
                                     <span class="badge" style="padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;
-                                        @if($item->is_featured) background: #dcfce7; color: #15803d; @else background: #f1f5f9; color: #64748b; @endif">
+                                        @if ($item->is_featured) background: #dcfce7; color: #15803d; @else background: #f1f5f9; color: #64748b; @endif">
                                         {{ $item->is_featured ? 'Yes' : 'No' }}
                                     </span>
                                 </td>

@@ -1,5 +1,5 @@
 @extends('admin.layout.app')
-@section('title', 'Lakhtar news - Add Category')
+@section('title', 'Lakhtar News Update - Add Category')
 
 @section('main')
     <div class="main-content-inner">

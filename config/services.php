@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'fcm' => [
+        'users_topic' => env('FCM_USERS_TOPIC', 'lakhtar_news_users'),
+        'reporter_topic_prefix' => env('FCM_REPORTER_TOPIC_PREFIX', 'reporter_'),
+    ],
+
 ];

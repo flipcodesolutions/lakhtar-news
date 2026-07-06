@@ -1,5 +1,5 @@
 @extends('admin.layout.app')
-@section('title', 'Lakhtar news - ' . ($cms->title ?? 'CMS Page'))
+@section('title', 'Lakhtar News Update - ' . ($cms->title ?? 'CMS Page'))
 @section('main')
     <div class="main-content-inner">
         <div class="content-card">

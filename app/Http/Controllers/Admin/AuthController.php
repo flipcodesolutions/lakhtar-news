@@ -102,6 +102,9 @@ class AuthController extends Controller
             'password' => 'required|string|max:255',
         ]);
         $user = User::where('email', $request->email)->first();
+        if ($user->role !== 'admin') {
+            return redirect()->back()->withInput()->with('error', 'You are not authorized to access this application');
+        }
         if (!$user) {
             return redirect()->back()->withInput()->with('error', 'Email not found');
         }

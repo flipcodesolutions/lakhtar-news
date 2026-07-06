@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\HomeController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ReporterController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -14,13 +15,17 @@ Route::post('/send-otp', [AuthController::class, 'sendOTP']);
 Route::post('/verify-otp', [AuthController::class, 'verifyOTP']);
 Route::post('/register', [AuthController::class, 'register']);
 
-Route::get('/categories', [HomeController::class, 'getCategories']);
+// Firebase push notification test (only works when APP_DEBUG=true)
+Route::post('/test-push-notification', [NotificationController::class, 'testPushNotification']);
+
 Route::get('/banners', [HomeController::class, 'getBanners']);
 
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/categories', [HomeController::class, 'getCategories']);
 
     Route::get('/profile', [AuthController::class, 'getProfile']);
-    Route::put('/update-profile', [AuthController::class, 'updateProfile']);
+    Route::post('/profile', [AuthController::class, 'updateProfile']);
+    Route::match(['put', 'post'], '/update-profile', [AuthController::class, 'updateProfile']);
     Route::put('/change-language', [AuthController::class, 'changeLanguage']);
 
     // home
@@ -59,7 +64,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/my-dashboard-stat', [ReporterController::class, 'dashboardStat']);
 
     Route::get('/media', [ReporterController::class, 'getAllMedia']);
-    Route::get('/top-reporter', [HomeController::class, 'getTopReporters']);
 
     Route::get('/comments/{news_id}', [ReporterController::class, 'getComments']);
     Route::post('/add-comment', [ReporterController::class, 'addComment']);
@@ -71,7 +75,16 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/alerts', [ReporterController::class, 'getAlerts']);
 
+    Route::get('/top-reporter', [HomeController::class, 'getTopReporters']);
+
     Route::get('/my-liked-news', [HomeController::class, 'myLikedNews']);
+    Route::post('/store-fcm-token', [AuthController::class, 'storeFcmToken']);
+
+    // notifications
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::put('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+    Route::put('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
 });
 // cms APIs
 Route::get('/cms', [AuthController::class, 'getCmsSlugs']);

@@ -1,5 +1,5 @@
 @extends('admin.layout.app')
-@section('title', 'Lakhtar news - Edit News')
+@section('title', 'Lakhtar News Update - Edit News')
 
 @section('main')
     <style>

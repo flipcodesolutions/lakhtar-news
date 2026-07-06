@@ -1,5 +1,5 @@
 @extends('admin.layout.app')
-@section('title', 'Lakhtar news - User List')
+@section('title', 'Lakhtar News Update - User List')
 @section('main')
     <div class="main-content-inner">
         <div class="content-card">
@@ -14,8 +14,7 @@
                 <div class="list-filter-grid">
                     <div class="list-filter-field list-filter-search">
                         <label for="user-search">Search</label>
-                        <input type="text" id="user-search" name="search" class="form-control" value="{{ request('search') }}"
-                            placeholder="Search by name, email, or mobile">
+                        <input type="text" id="user-search" name="search" class="form-control" value="{{ request('search') }}" placeholder="Search by name, email, or mobile">
                     </div>
                     <div class="list-filter-field">
                         <label for="user-role">Role</label>
