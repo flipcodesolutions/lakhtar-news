@@ -756,6 +756,7 @@ class HomeController extends Controller
                 ->orderBy('id', 'desc')
                 ->get()
                 ->map(function ($item) use ($titleColumn, $descriptionColumn) {
+                    $total_views = WatchHistory::where('news_id', $item->id)->count();
                     return [
                         'id' => $item->id,
                         'title' => $item->$titleColumn,
@@ -773,7 +774,7 @@ class HomeController extends Controller
                                 'sort_order' => $mediaItem->pivot?->sort_order,
                             ];
                         })->values(),
-                        'total_views' => $item->total_views,
+                        'total_views' => $total_views,
                         'likes_count' => $item->likes_count,
                         'comments_count' => $item->comments_count,
                         'publish_date' => $item->publish_date,
