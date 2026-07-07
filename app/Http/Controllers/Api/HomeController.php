@@ -1410,7 +1410,7 @@ class HomeController extends Controller
     {
         try {
             $likedNews = Like::where('user_id', Auth::id())
-                ->with('news')
+                ->with('news.media')
                 ->get();
 
             return Util::getSuccessMessage(
@@ -1419,6 +1419,15 @@ class HomeController extends Controller
                     'liked_news' => $likedNews
                 ]
             );
+        } catch (\Exception $e) {
+            return Util::getErrorMessage($e->getMessage());
+        }
+    }
+    public function getAllCategories()
+    {
+        try {
+            $categories = Category::all();
+            return Util::getSuccessMessage('Categories fetched successfully.', $categories);
         } catch (\Exception $e) {
             return Util::getErrorMessage($e->getMessage());
         }

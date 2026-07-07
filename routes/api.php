@@ -20,6 +20,7 @@ Route::post('/test-push-notification', [NotificationController::class, 'testPush
 
 Route::get('/banners', [HomeController::class, 'getBanners']);
 
+Route::get('/get-categories', [HomeController::class, 'getAllCategories']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/categories', [HomeController::class, 'getCategories']);
 

@@ -1199,7 +1199,7 @@ class AuthController extends Controller
             default => 'My bookmarks',
         };
         try {
-            $bookmarks = UserBookmark::where('user_id', Auth::id())->with('news')->orderBy('id', 'desc')->get();
+            $bookmarks = UserBookmark::where('user_id', Auth::id())->with('news.media')->orderBy('id', 'desc')->get();
 
             return Util::getSuccessMessage($message, [
                 'bookmarks' => $bookmarks
