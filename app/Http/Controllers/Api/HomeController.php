@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\Like;
 use App\Models\News;
 use App\Models\TopReporter;
+use App\Models\UserFavoriteCategory;
 use App\Models\WatchHistory;
 use App\Utils\Util;
 use Illuminate\Http\Request;
@@ -1428,6 +1429,20 @@ class HomeController extends Controller
         try {
             $categories = Category::all();
             return Util::getSuccessMessage('Categories fetched successfully.', $categories);
+        } catch (\Exception $e) {
+            return Util::getErrorMessage($e->getMessage());
+        }
+    }
+    public function getUsersInterestedNews()
+    {
+        try {
+            $usersInterestedNews = UserFavoriteCategory::where('user_id', Auth::id())->with('category')
+                ->with('category.news.media')
+                ->get();
+
+            return Util::getSuccessMessage('Users interested news fetched successfully.', [
+                'users_interested_news' => $usersInterestedNews
+            ]);
         } catch (\Exception $e) {
             return Util::getErrorMessage($e->getMessage());
         }

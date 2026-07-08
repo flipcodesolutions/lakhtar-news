@@ -43,6 +43,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/update-my-interest', [AuthController::class, 'updateMyInterest']);
     Route::get('/video-news', [HomeController::class, 'getVideoNews']);
     Route::get('/get-news/{slug}', [HomeController::class, 'getNewsBySlug']);
+    Route::get('/get-users-interested-news', [HomeController::class, 'getUsersInterestedNews']);
 
     // bookmark
     Route::get('/my-bookmarks', [AuthController::class, 'getMyBookmarks']);

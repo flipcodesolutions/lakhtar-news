@@ -238,7 +238,7 @@ class ReporterController extends Controller
                 default => 'Reporter news fetched successfully',
             };
 
-            $news = News::with('media')
+            $news = News::with('media', 'category')
                 ->withCount(['likes', 'comments' => fn($query) => $query->where('is_approved', true)])
                 ->where('user_id', Auth::id())
                 ->when($request->filled('status'), function ($query) use ($request) {
@@ -1639,12 +1639,33 @@ class ReporterController extends Controller
     public function reportComment($id)
     {
         try {
-            $comment = Comments::find($id);
-            if (!$comment) {
+            $comment = Comments::with('news.user')->find($id);
+
+            if (! $comment) {
                 return Util::getErrorMessage('Comment not found');
             }
+
+            if ($comment->is_reported) {
+                return Util::getSuccessMessage('Comment reported successfully');
+            }
+
             $comment->is_reported = true;
             $comment->save();
+
+            $news = $comment->news;
+
+            if ($news && $news->user_id && $news->user_id !== Auth::id()) {
+                try {
+                    app(AppNotificationService::class)->notifyCommentReported($news, $comment);
+                } catch (Throwable $e) {
+                    Log::error('Failed to dispatch comment reported notification', [
+                        'comment_id' => $comment->id,
+                        'news_id' => $news->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
             return Util::getSuccessMessage('Comment reported successfully');
         } catch (\Exception $e) {
             return Util::getErrorMessage($e->getMessage());

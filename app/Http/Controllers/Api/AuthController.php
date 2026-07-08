@@ -926,18 +926,18 @@ class AuthController extends Controller
             };
 
             $categoryColumn = match ($language) {
-                'hin' => 'categoryHindi',
-                'guj' => 'categoryGujarati',
-                default => 'categoryEnglish',
+                'hin' => 'nameInHindi',
+                'guj' => 'nameInGujarati',
+                default => 'name',
             };
 
-            $categories = UserFavoriteCategory::with('category')
-                ->where('user_id', Auth::id())
+            $categories = Auth::user()
+                ->favoriteCategories()
                 ->get()
-                ->map(function ($item) use ($categoryColumn) {
+                ->map(function ($category) use ($categoryColumn) {
                     return [
-                        'id' => $item->category?->id,
-                        'category' => $item->category?->$categoryColumn,
+                        'id' => $category->id,
+                        'category' => $category->{$categoryColumn},
                     ];
                 });
 

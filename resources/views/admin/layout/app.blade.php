@@ -82,6 +82,11 @@
                                     Terms and Conditions
                                 </a>
                             </li>
+                            <li>
+                                <a href="{{ route('admin.cms.show', ['slug' => 'contact-support']) }}" class="{{ request()->routeIs('admin.cms.*') && request()->route('slug') === 'conterms-and-conditions' ? 'active' : '' }}">
+                                    Contact Support
+                                </a>
+                            </li>
                         </ul>
                     </li>
                 </ul>

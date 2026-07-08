@@ -11,7 +11,6 @@ use App\Models\UserNotification;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Kreait\Firebase\Exception\MessagingException;
 use Throwable;
 
 class AppNotificationService
@@ -160,6 +159,50 @@ class AppNotificationService
             referenceId: $news->id,
             pushData: [
                 'type' => Notification::TYPE_NEW_COMMENT,
+                'news_id' => (string) $news->id,
+                'comment_id' => (string) $comment->id,
+                'reporter_id' => (string) $news->user_id,
+            ]
+        );
+    }
+
+    public function notifyCommentReported(News $news, Comments $comment): ?Notification
+    {
+        $news->loadMissing('user');
+
+        if (! $news->user_id) {
+            Log::info('Comment reported notification skipped: missing news owner', [
+                'news_id' => $news->id,
+                'comment_id' => $comment->id,
+            ]);
+
+            return null;
+        }
+
+        if ($news->user?->role !== 'reporter') {
+            Log::info('Comment reported notification skipped: news owner is not a reporter', [
+                'news_id' => $news->id,
+                'owner_id' => $news->user_id,
+                'owner_role' => $news->user?->role,
+            ]);
+
+            return null;
+        }
+
+        $commentPreview = strlen($comment->comment) > 80
+            ? substr($comment->comment, 0, 80).'...'
+            : $comment->comment;
+
+        return $this->dispatchToUsers(
+            type: Notification::TYPE_COMMENT_REPORTED,
+            title: 'Comment Reported on Your News',
+            message: "A comment was reported on your news: \"{$commentPreview}\"",
+            userIds: [$news->user_id],
+            audience: Notification::AUDIENCE_REPORTER,
+            referenceType: 'news',
+            referenceId: $news->id,
+            pushData: [
+                'type' => Notification::TYPE_COMMENT_REPORTED,
                 'news_id' => (string) $news->id,
                 'comment_id' => (string) $comment->id,
                 'reporter_id' => (string) $news->user_id,
@@ -350,7 +393,10 @@ class AppNotificationService
     }
 
     /**
-     * Push to specific reporter(s) via per-reporter FCM topic and device token.
+     * Push to specific reporter(s) via their saved FCM device token only.
+     * Topic-based delivery is intentionally avoided for targeted reporter
+     * notifications to prevent other reporters from receiving them when a
+     * device token remains subscribed to multiple reporter topics.
      *
      * @param  list<int>  $reporterIds
      */
@@ -361,36 +407,6 @@ class AppNotificationService
         array $data,
         string $type
     ): void {
-        $prefix = config('services.fcm.reporter_topic_prefix', 'reporter_');
-
-        foreach ($reporterIds as $reporterId) {
-            $topic = $prefix.$reporterId;
-
-            try {
-                $this->firebaseNotification->sendToTopic($topic, $title, $message, $data);
-
-                Log::info('Reporter push sent to FCM topic', [
-                    'type' => $type,
-                    'topic' => $topic,
-                    'reporter_id' => $reporterId,
-                ]);
-            } catch (MessagingException $e) {
-                Log::warning('Reporter topic push failed', [
-                    'type' => $type,
-                    'topic' => $topic,
-                    'reporter_id' => $reporterId,
-                    'error' => $e->getMessage(),
-                ]);
-            } catch (Throwable $e) {
-                Log::error('Reporter topic push failed', [
-                    'type' => $type,
-                    'topic' => $topic,
-                    'reporter_id' => $reporterId,
-                    'error' => $e->getMessage(),
-                ]);
-            }
-        }
-
         $this->sendPushToUsers($reporterIds, $title, $message, $data, $type, 'reporter');
     }
 

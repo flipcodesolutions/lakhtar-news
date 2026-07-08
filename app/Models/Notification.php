@@ -18,6 +18,8 @@ class Notification extends Model
 
     public const TYPE_NEW_COMMENT = 'new_comment';
 
+    public const TYPE_COMMENT_REPORTED = 'comment_reported';
+
     public const AUDIENCE_USER = 'user';
 
     public const AUDIENCE_REPORTER = 'reporter';
