@@ -54,7 +54,7 @@
                     </div>
                     <div class="form-col">
                         <div class="form-group">
-                            <label for="end_date">End Date (Optional)</label>
+                            <label for="end_date">End Date <span class="text-sm text-danger">*</span></label>
                             <input type="date" id="end_date" name="end_date" value="{{ old('end_date') }}" class="form-control">
                             @error('end_date')
                                 <span class="text-danger">{{ $message }}</span>

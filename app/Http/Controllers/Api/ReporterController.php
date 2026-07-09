@@ -232,13 +232,19 @@ class ReporterController extends Controller
                 default => 'description',
             };
 
+            $categoryColumn = match ($language) {
+                'hin' => 'nameInHindi',
+                'guj' => 'nameInGujarati',
+                default => 'name',
+            };
+
             $message = match ($language) {
                 'hin' => 'रिपोर्टर की खबरें सफलतापूर्वक प्राप्त कर ली गईं।',
                 'guj' => 'રિપોર્ટર સમાચાર સફળતાપૂર્વક મેળવ્યા.',
                 default => 'Reporter news fetched successfully',
             };
 
-            $news = News::with('media', 'category')
+            $news = News::with('media')
                 ->withCount(['likes', 'comments' => fn($query) => $query->where('is_approved', true)])
                 ->where('user_id', Auth::id())
                 ->when($request->filled('status'), function ($query) use ($request) {
@@ -246,7 +252,7 @@ class ReporterController extends Controller
                 })
                 ->orderBy('id', 'desc')
                 ->get()
-                ->map(function ($item) use ($titleColumn, $descriptionColumn) {
+                ->map(function ($item) use ($titleColumn, $descriptionColumn, $categoryColumn) {
 
                     $media = $item->media->map(function ($mediaItem) {
                         return [
@@ -263,6 +269,7 @@ class ReporterController extends Controller
                         'id' => $item->id,
                         'title' => $item->$titleColumn,
                         'description' => $item->$descriptionColumn,
+                        'category' => $item->category?->$categoryColumn,
                         'slug' => $item->slug,
                         'image' => $item->image,
                         'video' => $item->video,
@@ -371,16 +378,55 @@ class ReporterController extends Controller
                 default => 'Reporter news details fetched successfully',
             };
 
-            $news = News::with('media')
+            $titleColumn = match ($language) {
+                'hin' => 'titleInHindi',
+                'guj' => 'titleInGujarati',
+                default => 'title',
+            };
+
+            $descriptionColumn = match ($language) {
+                'hin' => 'descriptionInHindi',
+                'guj' => 'descriptionInGujarati',
+                default => 'description',
+            };
+
+            $categoryColumn = match ($language) {
+                'hin' => 'nameInHindi',
+                'guj' => 'nameInGujarati',
+                default => 'name',
+            };
+
+            $news = News::with('media', 'category')
                 ->withCount(['likes', 'comments' => fn($query) => $query->where('is_approved', true)])
                 ->where('id', $id)
-                // ->where('user_id', Auth::id())
                 ->first();
 
             return Util::getSuccessMessage(
                 $message,
                 [
-                    'news' => $news
+                    'news' => [
+                        'id' => $news->id,
+                        'title' => $news->$titleColumn,
+                        'description' => $news->$descriptionColumn,
+                        'category' => $news->category?->$categoryColumn,
+                        'slug' => $news->slug,
+                        'image' => $news->image,
+                        'video' => $news->video,
+                        'status' => $news->status,
+                        'publish_date' => $news->publish_date,
+                        'created_at' => $news->created_at,
+                        'updated_at' => $news->updated_at,
+                    ],
+                    'media' => $news->media->map(function ($mediaItem) {
+                        return [
+                            'id' => $mediaItem->id,
+                            'media_type' => $mediaItem->media_type,
+                            'file_path' => $mediaItem->file_path,
+                            'thumbnail' => $mediaItem->thumbnail,
+                            'caption' => $mediaItem->caption,
+                            'sort_order' => $mediaItem->pivot?->sort_order,
+                        ];
+                    })->values(),
                 ]
             );
         } catch (\Exception $e) {
@@ -1313,6 +1359,19 @@ class ReporterController extends Controller
         return $path ? ltrim($path, '/') : $reference;
     }
 
+    private function resolveMediaUrl(?string $path): ?string
+    {
+        if ($path === null || $path === '') {
+            return null;
+        }
+
+        if (preg_match('/^https?:\/\//i', $path)) {
+            return $path;
+        }
+
+        return asset($path);
+    }
+
     private function generateUniqueSlug(string $title, ?int $ignoreNewsId = null): string
     {
         $base = Str::slug($title);
@@ -1560,11 +1619,23 @@ class ReporterController extends Controller
                 'guj' => 'મીડિયા સૂચિ સફળતાપૂર્વક મેળવી',
                 default => 'Media list fetched successfully',
             };
-            $media = Media::all();
-            return Util::getSuccessMessage(
-                $message,
-                $media
-            );
+
+            $media = Media::query()
+                ->where('uploaded_by', Auth::id())
+                ->orderByDesc('id')
+                ->get()
+                ->map(fn (Media $item) => [
+                    'id' => $item->id,
+                    'media_url' => $this->resolveMediaUrl($item->file_path),
+                    'media_type' => $item->media_type,
+                    'thumbnail' => $item->thumbnail ? $this->resolveMediaUrl($item->thumbnail) : null,
+                    'caption' => $item->caption,
+                    'created_at' => $item->created_at,
+                    'updated_at' => $item->updated_at,
+                ])
+                ->values();
+
+            return Util::getSuccessMessage($message, $media);
         } catch (\Exception $e) {
             return Util::getErrorMessage($e->getMessage());
         }

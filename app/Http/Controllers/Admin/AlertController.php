@@ -61,7 +61,7 @@ class AlertController extends Controller
             'detailsInGujarati' => 'nullable|string|max:255',
             'type' => 'required|in:alert,info',
             'status' => 'required|in:0,1',
-            'end_date' => 'nullable|date',
+            'end_date' => 'required|date',
         ]);
 
         $alert = new Alert();
@@ -109,7 +109,7 @@ class AlertController extends Controller
             'detailsInGujarati' => 'nullable|string|max:255',
             'type' => 'required|in:alert,info',
             'status' => 'required|in:0,1',
-            'end_date' => 'nullable|date',
+            'end_date' => 'required|date',
         ]);
 
         $wasActive = (bool) $alert->status;

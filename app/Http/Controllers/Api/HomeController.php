@@ -108,6 +108,10 @@ class HomeController extends Controller
             ->when($search, function ($query) use ($search, $column) {
                 $query->where($column, 'like', "%{$search}%");
             })
+            ->whereHas('news', function ($query) {
+                $query->where('status', 'approved')
+                    ->whereDate('publish_date', '<=', now());
+            })
             ->orderBy('id', 'asc')
             ->get();
 
@@ -1438,6 +1442,12 @@ class HomeController extends Controller
         try {
             $usersInterestedNews = UserFavoriteCategory::where('user_id', Auth::id())->with('category')
                 ->with('category.news.media')
+                ->whereHas('category.news', function ($query) {
+                    $query->where('status', 'approved')
+                        ->whereDate('publish_date', '<=', now())
+                        ->orderByDesc('id')
+                        ->limit(10);
+                })
                 ->get();
 
             return Util::getSuccessMessage('Users interested news fetched successfully.', [
