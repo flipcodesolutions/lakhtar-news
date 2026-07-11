@@ -1431,7 +1431,20 @@ class HomeController extends Controller
     public function getAllCategories()
     {
         try {
-            $categories = Category::all();
+            $language = Auth::user()?->language ?? 'eng';
+            $categoryColumn = match ($language) {
+                'hin' => 'nameInHindi',
+                'guj' => 'nameInGujarati',
+                default => 'name',
+            };
+            if ($language == 'hin') {
+                $categories = Category::select('id', 'nameInHindi')->get();
+            } else if ($language == 'guj') {
+                $categories = Category::select('id', 'nameInGujarati')->get();
+            } else {
+                $categories = Category::select('id', 'name')->get();
+            }
+            $categories = Category::select('id', $categoryColumn)->get();
             return Util::getSuccessMessage('Categories fetched successfully.', $categories);
         } catch (\Exception $e) {
             return Util::getErrorMessage($e->getMessage());

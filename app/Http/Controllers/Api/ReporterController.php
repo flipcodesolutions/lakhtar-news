@@ -278,6 +278,10 @@ class ReporterController extends Controller
                         'likes_count' => $item->likes_count,
                         'comments_count' => $item->comments_count,
                         'status' => $item->status,
+                        'titleInHindi' => $item->titleInHindi,
+                        'titleInGujarati' => $item->titleInGujarati,
+                        'descriptionInHindi' => $item->descriptionInHindi,
+                        'descriptionInGujarati' => $item->descriptionInGujarati,
                         'created_at' => $item->created_at,
                     ];
                 });
@@ -413,6 +417,10 @@ class ReporterController extends Controller
                         'image' => $news->image,
                         'video' => $news->video,
                         'status' => $news->status,
+                        'titleInHindi' => $news->titleInHindi,
+                        'titleInGujarati' => $news->titleInGujarati,
+                        'descriptionInHindi' => $news->descriptionInHindi,
+                        'descriptionInGujarati' => $news->descriptionInGujarati,
                         'publish_date' => $news->publish_date,
                         'created_at' => $news->created_at,
                         'updated_at' => $news->updated_at,

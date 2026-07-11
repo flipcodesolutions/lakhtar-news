@@ -88,7 +88,12 @@ class AuthController extends Controller
                 || $mobile == '2222222222' || $mobile == '3333333333'
                 || $mobile == '4444444444' || $mobile == '5555555555'
                 || $mobile == '6666666666' || $mobile == '7777777777'
-                || $mobile == '8888888888'
+                || $mobile == '8888888888' || $mobile == '9979910604'
+                || $mobile == '9574962086' || $mobile == '9870065746'
+                || $mobile == '6352121753' || $mobile == '9484772611'
+                || $mobile == '9328407114' || $mobile == '7096909990'
+                || $mobile == '9913897014' || $mobile == '8849683644'
+                || $mobile == '7778047877' 
             ) {
 
                 $otp = 1234;
@@ -96,7 +101,7 @@ class AuthController extends Controller
                 Cache::put('otp_' . $mobile, [
                     'mobile' => $mobile,
                     'otp' => $otp,
-                ], now()->addMinutes(5));
+                ], now()->addMinutes(2));
 
                 return Util::getSuccessMessage('OTP sent successfully.');
             }
@@ -123,7 +128,7 @@ class AuthController extends Controller
             Cache::put('otp_' . $mobile, [
                 'mobile' => $mobile,
                 'otp' => $otp,
-            ], now()->addMinutes(5));
+            ], now()->addMinutes(2));
 
             return Util::getSuccessMessage('OTP sent successfully.');
         } catch (\Exception $e) {
