@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\HomeController;
 use App\Http\Controllers\Admin\NewsController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\CmsController;
+use App\Http\Controllers\DeepLinkController;
 use App\Http\Controllers\MediaController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -17,6 +18,10 @@ Route::get('/', function () {
         ? redirect()->route('admin.dashboard')
         : redirect()->route('admin.login');
 });
+
+Route::get('/get-news/{slug}', [DeepLinkController::class, 'fallback']);
+Route::get('/news-details/{id}', [DeepLinkController::class, 'fallback'])->whereNumber('id');
+Route::get('/news', [DeepLinkController::class, 'fallback']);
 
 Route::get('/login', [AuthController::class, 'login'])->name('admin.login');
 Route::post('/login', [AuthController::class, 'loginPost'])->name('admin.login.post');

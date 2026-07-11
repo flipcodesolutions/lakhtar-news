@@ -54,6 +54,8 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    'play_store_url' => env('PLAY_STORE_URL'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

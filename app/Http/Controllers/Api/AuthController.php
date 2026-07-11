@@ -92,8 +92,9 @@ class AuthController extends Controller
                 || $mobile == '9574962086' || $mobile == '9870065746'
                 || $mobile == '6352121753' || $mobile == '9484772611'
                 || $mobile == '9328407114' || $mobile == '7096909990'
-                || $mobile == '9913897014' || $mobile == '8849683644'
-                || $mobile == '7778047877' 
+                || $mobile == '9913897014'
+                // || $mobile == '8849683644'
+                || $mobile == '7778047877'
             ) {
 
                 $otp = 1234;
@@ -106,24 +107,30 @@ class AuthController extends Controller
                 return Util::getSuccessMessage('OTP sent successfully.');
             }
             $otp = random_int(1000, 9999);
-            $message = "Dear member, OTP forMindful Youth Program Registration is {$otp}. Do not share it with anyone -CCCTST";
+            $numbers = $request->mobile;
+            $sender = urlencode('GUERAR');
+            $message = "{$otp} is the OTP for login. Please do not share this OTP with anyone. This SMS has been sent from GuestRAR.";
+            $username = "Flipcodesolutions";
+            $smstype = "TRANS";
 
+            // Prepare data for POST request
             $data = array(
-                'mobile' => "9879301004",
-                "pass" => urlencode(env('OTP_API_KEY')),
-                "senderid" => "CCCTST",
-                "to" => $mobile,
-                "msg" => $message,
+                'apikey' => urlencode(env('OTP_API_KEY')),
+                'numbers' => $numbers,
+                "sender" => $sender,
+                "message" => $message,
+                "username" => $username,
+                "sendername" => $sender,
+                "smstype" => $smstype,
             );
 
             // Send the POST request with cURL
-            $ch = curl_init('http://smsmaster.bhavanisoftware.com/smsstatuswithid.aspx');
+            $ch = curl_init('http://sms.hspsms.com/sendSMS?');
             curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             $response = curl_exec($ch);
             curl_close($ch);
-
 
             Cache::put('otp_' . $mobile, [
                 'mobile' => $mobile,
