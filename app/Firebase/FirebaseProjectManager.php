@@ -49,7 +49,12 @@ class FirebaseProjectManager extends BaseFirebaseProjectManager
             $factory = $factory->withServiceAccount($credentials);
         }
 
-        if ($projectId = $config['project_id'] ?? null) {
+        // Always align project ID with the credentials file when present.
+        $projectId = \App\Support\FirebaseCredentials::resolveProjectId(
+            $config['project_id'] ?? null
+        );
+
+        if ($projectId) {
             $factory = $factory->withProjectId($projectId);
         }
 

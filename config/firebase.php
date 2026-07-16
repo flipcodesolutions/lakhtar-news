@@ -58,7 +58,9 @@ return [
              * Explicit Firebase project ID (required on server if credentials
              * file is missing or cannot be read).
              */
-            'project_id' => env('FIREBASE_PROJECT_ID', env('GOOGLE_CLOUD_PROJECT', 'lakhtar-news')),
+            'project_id' => FirebaseCredentials::resolveProjectId(
+                env('FIREBASE_PROJECT_ID', env('GOOGLE_CLOUD_PROJECT'))
+            ),
 
             /*
              * ------------------------------------------------------------------------

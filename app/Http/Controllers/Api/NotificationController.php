@@ -10,6 +10,7 @@ use App\Services\FirebaseNotificationService;
 use App\Utils\Util;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class NotificationController extends Controller
 {
@@ -170,9 +171,11 @@ class NotificationController extends Controller
             if ($tokens === []) {
                 return Util::getErrorMessage('No FCM tokens found in the database. Store tokens via /api/store-fcm-token or pass a single fcm_token in the request body.');
             }
-
+            Log::info('Tokens: ' . json_encode($tokens));
             $result = $this->firebaseNotification->sendToTokens($tokens, $title, $body, $data);
-
+            Log::info('Firebase notification result: ' . json_encode($result));
+            Log::info('Firebase notification result: ' . json_encode($result['success_count']));
+            Log::info('Firebase notification result: ' . json_encode($result['failure_count']));
             return Util::getSuccessMessage('Push notifications sent to all users with FCM tokens', [
                 'token_count' => count($tokens),
                 'success_count' => $result['success_count'],

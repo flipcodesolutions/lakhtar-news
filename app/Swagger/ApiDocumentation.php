@@ -17,6 +17,11 @@ namespace App\Swagger;
  *     url="https://news.flipcodesolutions.com/api",
  *     description="Production API Server"
  * )
+ * 
+ * @OA\Server(
+ *     url="https://lakhtarnewsupdate.in/api",
+ *     description="Live API Server"
+ * )
  *
  * @OA\SecurityScheme(
  *     securityScheme="sanctum",

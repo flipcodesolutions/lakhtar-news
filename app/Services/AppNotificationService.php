@@ -124,44 +124,50 @@ class AppNotificationService
     {
         $news->loadMissing('user');
 
-        if (! $news->user_id || $news->user_id === $commenter->id) {
-            Log::info('Comment notification skipped: missing owner or commenter is owner', [
+        $owner = $news->user;
+        $ownerId = (int) ($news->user_id ?? 0);
+        $commenterId = (int) $commenter->id;
+
+        if ($ownerId === 0 || ! $owner) {
+            Log::info('Comment notification skipped: news has no owner', [
                 'news_id' => $news->id,
-                'owner_id' => $news->user_id,
-                'commenter_id' => $commenter->id,
             ]);
 
             return null;
         }
 
-        if ($news->user?->role !== 'reporter') {
-            Log::info('Comment notification skipped: news owner is not a reporter', [
+        if ($ownerId === $commenterId) {
+            Log::info('Comment notification skipped: commenter is news owner', [
                 'news_id' => $news->id,
-                'owner_id' => $news->user_id,
-                'owner_role' => $news->user?->role,
+                'owner_id' => $ownerId,
             ]);
 
             return null;
         }
 
         $commenterName = $commenter->name ?: 'Someone';
-        $commentPreview = strlen($comment->comment) > 80
-            ? substr($comment->comment, 0, 80).'...'
-            : $comment->comment;
+        $commentPreview = strlen((string) $comment->comment) > 80
+            ? substr((string) $comment->comment, 0, 80).'...'
+            : (string) $comment->comment;
+
+        $audience = $owner->role === 'reporter'
+            ? Notification::AUDIENCE_REPORTER
+            : Notification::AUDIENCE_USER;
 
         return $this->dispatchToUsers(
             type: Notification::TYPE_NEW_COMMENT,
             title: 'New Comment on Your News',
             message: "{$commenterName} commented: {$commentPreview}",
-            userIds: [$news->user_id],
-            audience: Notification::AUDIENCE_REPORTER,
+            userIds: [$ownerId],
+            audience: $audience,
             referenceType: 'news',
             referenceId: $news->id,
             pushData: [
                 'type' => Notification::TYPE_NEW_COMMENT,
                 'news_id' => (string) $news->id,
                 'comment_id' => (string) $comment->id,
-                'reporter_id' => (string) $news->user_id,
+                'reporter_id' => (string) $ownerId,
+                'slug' => (string) ($news->slug ?? ''),
             ]
         );
     }
@@ -393,10 +399,9 @@ class AppNotificationService
     }
 
     /**
-     * Push to specific reporter(s) via their saved FCM device token only.
-     * Topic-based delivery is intentionally avoided for targeted reporter
-     * notifications to prevent other reporters from receiving them when a
-     * device token remains subscribed to multiple reporter topics.
+     * Push to specific reporter(s).
+     * Prefer the saved device FCM token; if missing, fall back to that
+     * reporter's private topic (reporter_{id}).
      *
      * @param  list<int>  $reporterIds
      */
@@ -407,7 +412,56 @@ class AppNotificationService
         array $data,
         string $type
     ): void {
-        $this->sendPushToUsers($reporterIds, $title, $message, $data, $type, 'reporter');
+        $reporterIds = array_values(array_unique(array_filter(array_map('intval', $reporterIds))));
+
+        if ($reporterIds === []) {
+            Log::warning('Push notification skipped: no reporter recipients', [
+                'type' => $type,
+            ]);
+
+            return;
+        }
+
+        // Send by user id only (no role filter) so a valid token is never dropped.
+        $reporters = User::query()
+            ->whereIn('id', $reporterIds)
+            ->get(['id', 'fcm_token', 'role']);
+
+        $tokens = $reporters
+            ->pluck('fcm_token')
+            ->filter(fn ($token) => is_string($token) && trim($token) !== '')
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($tokens !== []) {
+            $this->sendPushToTokenList($tokens, $title, $message, $data, $type);
+
+            return;
+        }
+
+        $prefix = (string) config('services.fcm.reporter_topic_prefix', 'reporter_');
+
+        foreach ($reporterIds as $reporterId) {
+            $topic = $prefix.$reporterId;
+
+            try {
+                $this->firebaseNotification->sendToTopic($topic, $title, $message, $data);
+
+                Log::info('Reporter push sent via topic fallback', [
+                    'type' => $type,
+                    'reporter_id' => $reporterId,
+                    'topic' => $topic,
+                ]);
+            } catch (Throwable $e) {
+                Log::error('Reporter topic push failed', [
+                    'type' => $type,
+                    'reporter_id' => $reporterId,
+                    'topic' => $topic,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
     }
 
     /**

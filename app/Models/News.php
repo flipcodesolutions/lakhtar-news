@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class News extends Model
 {
@@ -42,6 +43,52 @@ class News extends Model
             'status' => 'string',
             'reject_reason' => 'string',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (News $news) {
+            if (blank($news->slug) && filled($news->title)) {
+                $news->slug = static::generateUniqueSlug($news->title);
+            }
+        });
+
+        static::updating(function (News $news) {
+            if ($news->isDirty('title') && ! $news->isDirty('slug') && filled($news->title)) {
+                $news->slug = static::generateUniqueSlug($news->title, $news->id);
+            }
+        });
+    }
+
+    public static function generateUniqueSlug(string $title, ?int $ignoreNewsId = null): string
+    {
+        $base = Str::slug($title);
+        $base = $base !== '' ? $base : 'news';
+
+        $query = static::query()->where('slug', $base);
+        if ($ignoreNewsId !== null) {
+            $query->where('id', '!=', $ignoreNewsId);
+        }
+
+        if (! $query->exists()) {
+            return $base;
+        }
+
+        $suffix = 2;
+        while (true) {
+            $candidate = $base.'-'.$suffix;
+
+            $candidateQuery = static::query()->where('slug', $candidate);
+            if ($ignoreNewsId !== null) {
+                $candidateQuery->where('id', '!=', $ignoreNewsId);
+            }
+
+            if (! $candidateQuery->exists()) {
+                return $candidate;
+            }
+
+            $suffix++;
+        }
     }
 
     public function scopeEligibleForScheduledNotification(Builder $query): Builder

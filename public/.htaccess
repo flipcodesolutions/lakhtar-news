@@ -19,7 +19,7 @@
     RewriteRule ^ %1 [L,R=301]
 
     # Deep link: /news must reach Laravel (public/news is the uploads folder)
-    RewriteRule ^news$ index.php [L,QSA]
+    RewriteRule ^news/?$ index.php [L,QSA]
 
     # Send Requests To Front Controller...
     RewriteCond %{REQUEST_FILENAME} !-d

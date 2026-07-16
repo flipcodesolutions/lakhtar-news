@@ -87,6 +87,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
     Route::put('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
     Route::put('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+
+    Route::delete('/delete-account', [AuthController::class, 'deleteAccount']);
 });
 // cms APIs
 Route::get('/cms', [AuthController::class, 'getCmsSlugs']);

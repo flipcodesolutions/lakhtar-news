@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Cms;
+use App\Models\News;
 use App\Models\User;
 use App\Models\UserBookmark;
 use App\Models\UserFavoriteCategory;
@@ -92,7 +93,7 @@ class AuthController extends Controller
                 || $mobile == '9574962086' || $mobile == '9870065746'
                 || $mobile == '6352121753' || $mobile == '9484772611'
                 || $mobile == '9328407114' || $mobile == '7096909990'
-                || $mobile == '9913897014'
+                // || $mobile == '9913897014'
                 // || $mobile == '8849683644'
                 || $mobile == '7778047877'
             ) {
@@ -1785,6 +1786,98 @@ class AuthController extends Controller
             ]);
         } catch (\Exception $e) {
             return Util::getErrorMessage($e->getMessage());
+        }
+    }
+
+    public function deleteAccount()
+    {
+        try {
+            $user = Auth::user();
+
+            if (! $user) {
+                return Util::getErrorMessage('Unauthenticated.');
+            }
+
+            $profileImagePath = $user->profile_image ? public_path($user->profile_image) : null;
+
+            DB::transaction(function () use ($user) {
+                $this->deleteOwnedNewsRecords($user);
+
+                $user->favoriteCategories()->detach();
+                DB::table('user_bookmarks')->where('user_id', $user->id)->delete();
+                DB::table('watch_histories')->where('user_id', $user->id)->delete();
+                DB::table('likes')->where('user_id', $user->id)->delete();
+                DB::table('comments')->where('user_id', $user->id)->delete();
+                DB::table('news_views')->where('user_id', $user->id)->delete();
+                DB::table('video_edits')->where('user_id', $user->id)->delete();
+                DB::table('top_reporters')->where('user_id', $user->id)->delete();
+                DB::table('user_notifications')->where('user_id', $user->id)->delete();
+
+                $user->tokens()->delete();
+                $user->delete();
+            });
+
+            if ($profileImagePath && File::exists($profileImagePath)) {
+                File::delete($profileImagePath);
+            }
+
+            return Util::getSuccessMessage('Account deleted successfully');
+        } catch (\Exception $e) {
+            return Util::getErrorMessage($e->getMessage());
+        }
+    }
+
+    private function deleteOwnedNewsRecords(User $user): void
+    {
+        $newsItems = News::with('media')
+            ->where('user_id', $user->id)
+            ->get();
+
+        if ($newsItems->isEmpty()) {
+            return;
+        }
+
+        $newsIds = $newsItems->pluck('id')->all();
+
+        foreach ($newsItems as $news) {
+            $this->deleteNewsMedia($news);
+        }
+
+        DB::table('user_bookmarks')->whereIn('news_id', $newsIds)->delete();
+        DB::table('watch_histories')->whereIn('news_id', $newsIds)->delete();
+        DB::table('likes')->whereIn('news_id', $newsIds)->delete();
+        DB::table('comments')->whereIn('news_id', $newsIds)->delete();
+        DB::table('news_views')->whereIn('news_id', $newsIds)->delete();
+        DB::table('video_edits')->whereIn('news_id', $newsIds)->delete();
+
+        News::whereIn('id', $newsIds)->delete();
+    }
+
+    private function deleteNewsMedia(News $news): void
+    {
+        $mediaItems = $news->media()
+            ->get(['media.id', 'media.media_type', 'media.file_path']);
+
+        if ($mediaItems->isEmpty()) {
+            return;
+        }
+
+        $news->media()->detach($mediaItems->pluck('id')->all());
+
+        foreach ($mediaItems as $media) {
+            if ($media->news()->exists()) {
+                continue;
+            }
+
+            if ($media->media_type === 'image' && $media->file_path) {
+                $absolutePath = public_path($media->file_path);
+
+                if (File::exists($absolutePath)) {
+                    File::delete($absolutePath);
+                }
+            }
+
+            $media->delete();
         }
     }
 }

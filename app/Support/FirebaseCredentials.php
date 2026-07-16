@@ -29,6 +29,26 @@ class FirebaseCredentials
     }
 
     /**
+     * Prefer project_id from the credentials JSON so .env cannot silently
+     * point FCM at an old/deleted Firebase project.
+     */
+    public static function resolveProjectId(?string $fallback = null): ?string
+    {
+        $credentials = self::resolve();
+
+        if (is_string($credentials) && is_file($credentials)) {
+            $decoded = json_decode((string) file_get_contents($credentials), true);
+            $credentials = is_array($decoded) ? $decoded : null;
+        }
+
+        if (is_array($credentials) && ! empty($credentials['project_id'])) {
+            return (string) $credentials['project_id'];
+        }
+
+        return $fallback;
+    }
+
+    /**
      * @return list<string>
      */
     protected static function candidatePaths(?string $raw): array

@@ -173,9 +173,9 @@ class FirebaseNotificationService
     private function getErrorHint(?string $fcmErrorCode): ?string
     {
         return match ($fcmErrorCode) {
-            'UNREGISTERED' => 'The FCM token is invalid or expired. Open the app to get a fresh token, save it via /api/store-fcm-token, then test again. Also verify the app uses the same Firebase project (lakhtar-news) as your server credentials.',
+            'UNREGISTERED' => 'The FCM token is invalid or expired. Open the app to get a fresh token, save it via /api/store-fcm-token, then test again. Also verify the app uses the same Firebase project (lakhtar-news-update) as your server credentials.',
             'INVALID_ARGUMENT' => 'The FCM token format is invalid. Pass the full token from FirebaseMessaging.getToken() on the device.',
-            'SENDER_ID_MISMATCH' => 'The app Firebase project does not match the server credentials project (lakhtar-news). Update google-services.json / GoogleService-Info.plist to match.',
+            'SENDER_ID_MISMATCH' => 'The app Firebase project does not match the server credentials project (lakhtar-news-update). Update google-services.json / GoogleService-Info.plist to match.',
             default => null,
         };
     }

@@ -422,6 +422,7 @@ class ReporterController extends Controller
                         'descriptionInHindi' => $news->descriptionInHindi,
                         'descriptionInGujarati' => $news->descriptionInGujarati,
                         'publish_date' => $news->publish_date,
+                        'reject_reason' => $news->reject_reason,
                         'created_at' => $news->created_at,
                         'updated_at' => $news->updated_at,
                     ],
@@ -588,7 +589,7 @@ class ReporterController extends Controller
                 $news = new News();
                 $news->category_id = $request->category_id;
                 $news->title = $request->title;
-                $news->slug = $this->generateUniqueSlug($request->title);
+                $news->slug = News::generateUniqueSlug($request->title);
                 $news->user_id = Auth::id();
                 $news->description = $request->description;
                 $news->titleInHindi = $request->titleInHindi;
@@ -805,7 +806,7 @@ class ReporterController extends Controller
             DB::transaction(function () use ($request, $news) {
                 $news->category_id = $request->category_id;
                 $news->title = $request->title;
-                $news->slug = $this->generateUniqueSlug($request->title, $news->id);
+                $news->slug = News::generateUniqueSlug($request->title, $news->id);
                 $news->user_id = Auth::id();
                 $news->description = $request->description;
                 $news->titleInHindi = $request->titleInHindi;
@@ -1380,36 +1381,6 @@ class ReporterController extends Controller
         return asset($path);
     }
 
-    private function generateUniqueSlug(string $title, ?int $ignoreNewsId = null): string
-    {
-        $base = Str::slug($title);
-        $base = $base !== '' ? $base : 'news';
-
-        $query = News::query()->where('slug', $base);
-        if ($ignoreNewsId !== null) {
-            $query->where('id', '!=', $ignoreNewsId);
-        }
-
-        if (! $query->exists()) {
-            return $base;
-        }
-
-        $suffix = 2;
-        while (true) {
-            $candidate = $base . '-' . $suffix;
-            $candidateQuery = News::query()->where('slug', $candidate);
-            if ($ignoreNewsId !== null) {
-                $candidateQuery->where('id', '!=', $ignoreNewsId);
-            }
-
-            if (! $candidateQuery->exists()) {
-                return $candidate;
-            }
-
-            $suffix++;
-        }
-    }
-
     private function isYoutubeUrl(string $url): bool
     {
         $host = strtolower((string) parse_url($url, PHP_URL_HOST));
@@ -1667,8 +1638,9 @@ class ReporterController extends Controller
             if ($validator->fails()) {
                 return Util::getErrorMessage(null, $validator->errors());
             }
+            $commenter = Auth::user();
             $comment = Comments::create([
-                'user_id' => Auth::id(),
+                'user_id' => $commenter->id,
                 'news_id' => $request->news_id,
                 'comment' => $request->comment,
                 'is_approved' => true,
@@ -1676,9 +1648,9 @@ class ReporterController extends Controller
             ]);
 
             $news = News::with('user')->find($request->news_id);
-            if ($news) {
+            if ($news && $commenter) {
                 try {
-                    $notification = app(AppNotificationService::class)->notifyNewComment($news, $comment, Auth::user());
+                    $notification = app(AppNotificationService::class)->notifyNewComment($news, $comment, $commenter);
 
                     if (! $notification) {
                         Log::info('Comment notification was not created', [
@@ -1686,6 +1658,7 @@ class ReporterController extends Controller
                             'comment_id' => $comment->id,
                             'owner_id' => $news->user_id,
                             'owner_role' => $news->user?->role,
+                            'commenter_id' => $commenter->id,
                         ]);
                     }
                 } catch (Throwable $e) {

@@ -12,6 +12,10 @@
         {
             "url": "https://news.flipcodesolutions.com/api",
             "description": "Production API Server"
+        },
+        {
+            "url": "https://lakhtarnewsupdate.in/api",
+            "description": "Live API Server"
         }
     ],
     "paths": {

@@ -69,7 +69,7 @@ class NewsController extends Controller
             $news = new News();
             $news->category_id = $request->category_id;
             $news->title = $request->title;
-            $news->slug = Str::slug($request->title);
+            $news->slug = News::generateUniqueSlug($request->title);
             $news->user_id = Auth::id();
             $news->description = $request->description;
             $news->titleInHindi = $request->titleInHindi;
@@ -110,7 +110,7 @@ class NewsController extends Controller
         DB::transaction(function () use ($request, $news) {
             $news->category_id = $request->category_id;
             $news->title = $request->title;
-            $news->slug = Str::slug($request->title);
+            $news->slug = News::generateUniqueSlug($request->title, $news->id);
             $news->user_id = Auth::id();
             $news->description = $request->description;
             $news->titleInHindi = $request->titleInHindi;

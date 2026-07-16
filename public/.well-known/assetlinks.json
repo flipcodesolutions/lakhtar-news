@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.flipcode.lakhtar_news",
+      "sha256_cert_fingerprints": [
+        "FC:36:4D:DB:79:8E:07:C2:CE:5C:3C:87:94:DF:BD:5F:35:09:DD:66:6B:7C:FE:EC:86:D3:87:DC:F3:85:3D:E0"
+      ]
+    }
+  }
+]

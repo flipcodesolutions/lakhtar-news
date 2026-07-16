@@ -1,4 +1,9 @@
 <IfModule mod_rewrite.c>
-RewriteEngine On
-RewriteRule ^(.*)$ public/$1 [L]
+    RewriteEngine On
+
+    # Deep link /news?id=... must go to Laravel (not public/news/ uploads folder)
+    RewriteRule ^news/?$ public/index.php [L,QSA]
+
+    # Serve everything else from the public directory
+    RewriteRule ^(.*)$ public/$1 [L]
 </IfModule>
