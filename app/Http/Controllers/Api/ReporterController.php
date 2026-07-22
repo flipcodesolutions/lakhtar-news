@@ -8,6 +8,9 @@ use App\Models\Comments;
 use App\Models\Like;
 use App\Models\Media;
 use App\Models\News;
+use App\Models\Notification;
+use App\Models\UserNotification;
+use App\Models\WatchHistory;
 use App\Services\AppNotificationService;
 use App\Utils\Util;
 use Dom\Comment;
@@ -923,22 +926,42 @@ class ReporterController extends Controller
 
     public function deleteNews($id)
     {
-        $userId = Auth::user()->id;
-        $language = Auth::user()?->language ?? 'guj';
+        try {
+            $userId = Auth::user()->id;
+            $language = Auth::user()?->language ?? 'guj';
 
-        $message = match ($language) {
-            'hin' => 'रिपोर्टर न्यूज़ सफलतापूर्वक हटा दी गई।',
-            'guj' => 'રિપોર્ટર સમાચાર સફળતાપૂર્વક કાઢી નાખવામાં આવ્યા',
-            default => 'Reporter news deleted successfully',
-        };
+            $message = match ($language) {
+                'hin' => 'रिपोर्टर न्यूज़ सफलतापूर्वक हटा दी गई।',
+                'guj' => 'રિપોર્ટર સમાચાર સફળતાપૂર્વક કાઢી નાખવામાં આવ્યા',
+                default => 'Reporter news deleted successfully',
+            };
 
-        $news = News::with('media')->where('id', $id)->where('user_id', $userId)->first();
-        if (!$news) {
-            return Util::getErrorMessage('News not found');
+            $news = News::with('media')->where('id', $id)->where('user_id', $userId)->first();
+            if (! $news) {
+                return Util::getErrorMessage('News not found');
+            }
+
+            DB::transaction(function () use ($news) {
+                WatchHistory::where('news_id', $news->id)->delete();
+
+                $notificationIds = Notification::query()
+                    ->where('reference_type', 'news')
+                    ->where('reference_id', $news->id)
+                    ->pluck('id');
+
+                if ($notificationIds->isNotEmpty()) {
+                    UserNotification::whereIn('notification_id', $notificationIds)->delete();
+                    Notification::whereIn('id', $notificationIds)->delete();
+                }
+
+                $this->removeSelectedMedia($news, $news->media->pluck('id')->all());
+                $news->delete();
+            });
+
+            return Util::getSuccessMessage($message);
+        } catch (\Exception $e) {
+            return Util::getErrorMessage($e->getMessage());
         }
-        $this->removeSelectedMedia($news, $news->media->pluck('id')->all());
-        $news->delete();
-        return Util::getSuccessMessage($message);
     }
 
     private function validateNewsRequest(Request $request, ?News $news = null): void
