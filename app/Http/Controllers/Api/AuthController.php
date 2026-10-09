@@ -109,8 +109,8 @@ class AuthController extends Controller
             }
             $otp = random_int(1000, 9999);
             $numbers = $request->mobile;
-            $sender = urlencode('GUERAR');
-            $message = "{$otp} is the OTP for login. Please do not share this OTP with anyone. This SMS has been sent from GuestRAR.";
+            $sender = urlencode('AFTTRD');
+            $message = "Your Aftertrade OTP is {$otp}. Valid 5 min. Do not share. -AfterTrade";
             $username = "Flipcodesolutions";
             $smstype = "TRANS";
 
